@@ -1,0 +1,474 @@
+/*
+ * Linux driver for HiFace M2Tech
+ *
+ * PCM driver
+ *
+ * Author:	Michael Trimarchi <michael@amarulasolutions.com>
+ * Created:	15 July 2012
+ * Copyright:	(C) Amarula Solutions B.V.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ */
+
+#define DEBUG
+#include "pcm.h"
+#include "chip.h"
+#include "control.h"
+#include <linux/usb.h>
+
+enum {
+	OUT_N_CHANNELS = 2
+};
+
+static const int rates[] = { 44100, 48000, 88200, 96000, 176400, 192000 };
+static const int rates_alsaid[] = {
+	SNDRV_PCM_RATE_44100, SNDRV_PCM_RATE_48000,
+	SNDRV_PCM_RATE_88200, SNDRV_PCM_RATE_96000,
+	SNDRV_PCM_RATE_176400, SNDRV_PCM_RATE_192000 };
+
+#define OUT_EP		2
+#define MAX_BUFSIZE	(PCM_N_URBS * PCM_MAX_PACKET_SIZE)
+
+enum { /* pcm streaming states */
+	STREAM_DISABLED, /* no pcm streaming */
+	STREAM_STARTING, /* pcm streaming requested, waiting to become ready */
+	STREAM_RUNNING, /* pcm streaming running */
+	STREAM_STOPPING
+};
+
+static const struct snd_pcm_hardware pcm_hw = {
+	.info = SNDRV_PCM_INFO_MMAP |
+		SNDRV_PCM_INFO_INTERLEAVED |
+		SNDRV_PCM_INFO_BLOCK_TRANSFER |
+		SNDRV_PCM_INFO_MMAP_VALID |
+		SNDRV_PCM_INFO_BATCH,
+
+	.formats = SNDRV_PCM_FMTBIT_S32_LE,
+
+	.rates = SNDRV_PCM_RATE_44100 |
+		SNDRV_PCM_RATE_48000 |
+		SNDRV_PCM_RATE_88200 |
+		SNDRV_PCM_RATE_96000 |
+		SNDRV_PCM_RATE_176400 |
+		SNDRV_PCM_RATE_192000,
+
+	.rate_min = 44100,
+	.rate_max = 192000,
+	.channels_min = 2,
+	.channels_max = 2, /* set in pcm_open */
+	.buffer_bytes_max = MAX_BUFSIZE,
+	.period_bytes_min = PCM_MAX_PACKET_SIZE,
+	.period_bytes_max = MAX_BUFSIZE,
+	.periods_min = 2,
+	.periods_max = 1024
+};
+
+static int hiface_pcm_set_rate(struct pcm_runtime *rt)
+{
+	int ret;
+	struct control_runtime *ctrl_rt = rt->chip->control;
+
+	ctrl_rt->usb_streaming = false;
+	ret = ctrl_rt->update_streaming(ctrl_rt);
+	if (ret < 0) {
+		printk(KERN_ERR "error stopping streaming while "
+				"setting samplerate %d.\n", rates[rt->rate]);
+		return ret;
+	}
+
+	ret = ctrl_rt->set_rate(ctrl_rt, rt->rate);
+	if (ret < 0) {
+		printk(KERN_ERR "error setting samplerate %d.\n",
+				rates[rt->rate]);
+		return ret;
+	}
+
+	ctrl_rt->usb_streaming = true;
+	ret = ctrl_rt->update_streaming(ctrl_rt);
+	if (ret < 0) {
+		printk(KERN_ERR "error starting streaming while "
+				"setting samplerate %d.\n", rates[rt->rate]);
+		return ret;
+	}
+
+	return 0;
+}
+
+static struct pcm_substream *hiface_pcm_get_substream(
+		struct snd_pcm_substream *alsa_sub)
+{
+	struct pcm_runtime *rt = snd_pcm_substream_chip(alsa_sub);
+
+	if (alsa_sub->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		return &rt->playback;
+
+	printk(KERN_ERR "error getting pcm substream slot.\n");
+	return NULL;
+}
+
+/* call with stream_mutex locked */
+static void hiface_pcm_stream_stop(struct pcm_runtime *rt)
+{
+	int i;
+	struct control_runtime *ctrl_rt = rt->chip->control;
+
+	if (rt->stream_state != STREAM_DISABLED) {
+		for (i = 0; i < PCM_N_URBS; i++) {
+			usb_kill_urb(&rt->out_urbs[i].instance);
+		}
+		ctrl_rt->usb_streaming = false;
+		ctrl_rt->update_streaming(ctrl_rt);
+		rt->stream_state = STREAM_DISABLED;
+	}
+}
+
+/* call with stream_mutex locked */
+static int hiface_pcm_stream_start(struct pcm_runtime *rt)
+{
+	int ret = 0, i;
+
+	if (rt->stream_state == STREAM_DISABLED) {
+		/* submit our out urbs zero init */
+		rt->stream_state = STREAM_STARTING;
+		for (i = 0; i < PCM_N_URBS; i++) {
+			ret = usb_submit_urb(&rt->out_urbs[i].instance,
+					GFP_ATOMIC);
+			if (ret) {
+				hiface_pcm_stream_stop(rt);
+				return ret;
+			}
+		}
+
+		/* wait for first out urb to return (sent in in urb handler) */
+		wait_event_timeout(rt->stream_wait_queue, rt->stream_wait_cond,
+				HZ);
+		if (rt->stream_wait_cond)
+			rt->stream_state = STREAM_RUNNING;
+		else {
+			hiface_pcm_stream_stop(rt);
+			return -EIO;
+		}
+	}
+	return ret;
+}
+
+
+/* call with substream locked */
+static void hiface_pcm_playback(struct pcm_substream *sub,
+		struct pcm_urb *urb)
+{
+	struct snd_pcm_runtime *alsa_rt = sub->instance->runtime;
+	u32 *dest, *source;
+	
+	if (alsa_rt->format == SNDRV_PCM_FORMAT_S32_LE)
+		dest = (u32 *) urb->buffer;
+	else {
+		printk(KERN_ERR "Unknown sample format.");
+		return;
+	}
+
+	if (alsa_rt->dma_bytes > PCM_MAX_PACKET_SIZE) {
+		source = (u32 *) (alsa_rt->dma_area + sub->dma_off);
+#if 0
+		memcpy(dest, source, PCM_MAX_PACKET_SIZE);
+#endif
+		sub->dma_off += PCM_MAX_PACKET_SIZE;
+	}
+}
+
+static void hiface_pcm_out_urb_handler(struct urb *usb_urb)
+{
+	struct pcm_urb *out_urb = usb_urb->context;
+	struct pcm_runtime *rt = out_urb->chip->pcm;
+	struct pcm_substream *sub;
+	unsigned long flags;
+
+	printk(KERN_ERR "%s: func\n", __func__);
+
+	if (usb_urb->status || rt->panic || rt->stream_state == STREAM_STOPPING)
+		return;
+
+	if (rt->stream_state == STREAM_STARTING) {
+		rt->stream_wait_cond = true;
+                wake_up(&rt->stream_wait_queue);
+        }
+
+	/* now send our playback data (if a free out urb was found) */
+	sub = &rt->playback;
+	spin_lock_irqsave(&sub->lock, flags);
+	if (sub->active) {
+		hiface_pcm_playback(sub, out_urb);
+		spin_unlock_irqrestore(&sub->lock, flags);
+	} else
+		spin_unlock_irqrestore(&sub->lock, flags);
+
+#if 0
+	usb_submit_urb(&out_urb->instance, GFP_ATOMIC);
+#endif
+}
+
+
+static int hiface_pcm_open(struct snd_pcm_substream *alsa_sub)
+{
+	struct pcm_runtime *rt = snd_pcm_substream_chip(alsa_sub);
+	struct pcm_substream *sub = NULL;
+	struct snd_pcm_runtime *alsa_rt = alsa_sub->runtime;
+
+	if (rt->panic)
+		return -EPIPE;
+
+	printk(KERN_ERR "%s: func\n", __func__);
+
+	mutex_lock(&rt->stream_mutex);
+	alsa_rt->hw = pcm_hw;
+
+	if (alsa_sub->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+		if (rt->rate < ARRAY_SIZE(rates))
+			alsa_rt->hw.rates = rates_alsaid[rt->rate];
+		alsa_rt->hw.channels_max = OUT_N_CHANNELS;
+		sub = &rt->playback;
+	}
+
+	if (!sub) {
+		mutex_unlock(&rt->stream_mutex);
+		printk(KERN_ERR "invalid stream type.\n");
+		return -EINVAL;
+	}
+
+	sub->instance = alsa_sub;
+	sub->active = false;
+	mutex_unlock(&rt->stream_mutex);
+	return 0;
+}
+
+static int hiface_pcm_close(struct snd_pcm_substream *alsa_sub)
+{
+	struct pcm_runtime *rt = snd_pcm_substream_chip(alsa_sub);
+	struct pcm_substream *sub = hiface_pcm_get_substream(alsa_sub);
+	unsigned long flags;
+
+	if (rt->panic)
+		return 0;
+
+	printk(KERN_ERR "%s: func\n", __func__);
+
+	mutex_lock(&rt->stream_mutex);
+	if (sub) {
+		/* deactivate substream */
+		spin_lock_irqsave(&sub->lock, flags);
+		sub->instance = NULL;
+		sub->active = false;
+		spin_unlock_irqrestore(&sub->lock, flags);
+
+		/* all substreams closed? if so, stop streaming */
+		if (!rt->playback.instance) {
+			hiface_pcm_stream_stop(rt);
+			rt->rate = ARRAY_SIZE(rates);
+		}
+	}
+	mutex_unlock(&rt->stream_mutex);
+	return 0;
+}
+
+static int hiface_pcm_hw_params(struct snd_pcm_substream *alsa_sub,
+		struct snd_pcm_hw_params *hw_params)
+{
+	printk(KERN_ERR "%s: func\n", __func__);
+	return snd_pcm_lib_malloc_pages(alsa_sub,
+			params_buffer_bytes(hw_params));
+}
+
+static int hiface_pcm_hw_free(struct snd_pcm_substream *alsa_sub)
+{
+	printk(KERN_ERR "%s: func\n", __func__);
+	return snd_pcm_lib_free_pages(alsa_sub);
+}
+
+static int hiface_pcm_prepare(struct snd_pcm_substream *alsa_sub)
+{
+	struct pcm_runtime *rt = snd_pcm_substream_chip(alsa_sub);
+	struct pcm_substream *sub = hiface_pcm_get_substream(alsa_sub);
+	struct snd_pcm_runtime *alsa_rt = alsa_sub->runtime;
+	int ret;
+
+	printk(KERN_ERR "%s: func\n", __func__);
+
+	if (rt->panic)
+		return -EPIPE;
+	if (!sub)
+		return -ENODEV;
+
+	mutex_lock(&rt->stream_mutex);
+
+	if (rt->stream_state == STREAM_DISABLED) {
+		for (rt->rate = 0; rt->rate < ARRAY_SIZE(rates); rt->rate++)
+			if (alsa_rt->rate == rates[rt->rate])
+				break;
+		if (rt->rate == ARRAY_SIZE(rates)) {
+			mutex_unlock(&rt->stream_mutex);
+			printk(KERN_ERR "invalid rate %d in prepare.\n",
+					alsa_rt->rate);
+			return -EINVAL;
+		}
+
+		ret = hiface_pcm_set_rate(rt);
+		if (ret) {
+			mutex_unlock(&rt->stream_mutex);
+			return ret;
+		}
+		ret = hiface_pcm_stream_start(rt);
+		if (ret) {
+			mutex_unlock(&rt->stream_mutex);
+			return ret;
+		}
+	}
+	mutex_unlock(&rt->stream_mutex);
+	return 0;
+}
+
+static int hiface_pcm_trigger(struct snd_pcm_substream *alsa_sub, int cmd)
+{
+	struct pcm_substream *sub = hiface_pcm_get_substream(alsa_sub);
+	struct pcm_runtime *rt = snd_pcm_substream_chip(alsa_sub);
+	unsigned long flags;
+
+	printk(KERN_ERR "%s: func\n", __func__);
+
+	if (rt->panic)
+		return -EPIPE;
+	if (!sub)
+		return -ENODEV;
+
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		spin_lock_irqsave(&sub->lock, flags);
+		sub->active = true;
+		spin_unlock_irqrestore(&sub->lock, flags);
+		return 0;
+
+	case SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		spin_lock_irqsave(&sub->lock, flags);
+		sub->active = false;
+		spin_unlock_irqrestore(&sub->lock, flags);
+		return 0;
+
+	default:
+		return -EINVAL;
+	}
+}
+
+static snd_pcm_uframes_t hiface_pcm_pointer(
+		struct snd_pcm_substream *alsa_sub)
+{
+	struct pcm_substream *sub = hiface_pcm_get_substream(alsa_sub);
+	struct pcm_runtime *rt = snd_pcm_substream_chip(alsa_sub);
+	unsigned long flags;
+	snd_pcm_uframes_t ret;
+
+	if (rt->panic || !sub)
+		return SNDRV_PCM_STATE_XRUN;
+
+	spin_lock_irqsave(&sub->lock, flags);
+	ret = sub->dma_off;
+	spin_unlock_irqrestore(&sub->lock, flags);
+	return ret;
+}
+
+static struct snd_pcm_ops pcm_ops = {
+	.open = hiface_pcm_open,
+	.close = hiface_pcm_close,
+	.ioctl = snd_pcm_lib_ioctl,
+	.hw_params = hiface_pcm_hw_params,
+	.hw_free = hiface_pcm_hw_free,
+	.prepare = hiface_pcm_prepare,
+	.trigger = hiface_pcm_trigger,
+	.pointer = hiface_pcm_pointer,
+};
+
+static void __devinit hiface_pcm_init_urb(struct pcm_urb *urb,
+		struct shiface_chip *chip, int ep,
+		void (*handler)(struct urb *))
+{
+	urb->chip = chip;
+	usb_init_urb(&urb->instance);
+	urb->buffer = kmalloc(PCM_MAX_PACKET_SIZE, GFP_KERNEL);
+        usb_fill_bulk_urb(&urb->instance, chip->dev, usb_sndbulkpipe(chip->dev, ep),
+			  (void *)urb->buffer, PCM_MAX_PACKET_SIZE, handler, urb);
+}
+
+int __devinit hiface_pcm_init(struct shiface_chip *chip)
+{
+	int i;
+	int ret;
+	struct snd_pcm *pcm;
+	struct pcm_runtime *rt =
+			kzalloc(sizeof(struct pcm_runtime), GFP_KERNEL);
+
+	if (!rt)
+		return -ENOMEM;
+
+	rt->chip = chip;
+	rt->stream_state = STREAM_DISABLED;
+	rt->rate = ARRAY_SIZE(rates);
+	init_waitqueue_head(&rt->stream_wait_queue);
+	mutex_init(&rt->stream_mutex);
+	spin_lock_init(&rt->playback.lock);
+
+	for (i = 0; i < PCM_N_URBS; i++)
+		hiface_pcm_init_urb(&rt->out_urbs[i], chip, OUT_EP,
+				hiface_pcm_out_urb_handler);
+
+	ret = snd_pcm_new(chip->card, "HiFace M2Tech", 0, 1, 0, &pcm);
+	if (ret < 0) {
+		kfree(rt);
+		printk(KERN_ERR "cannot create pcm instance.\n");
+		return ret;
+	}
+
+	pcm->private_data = rt;
+	strcpy(pcm->name, "HiFace M2Tech USB");
+	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &pcm_ops);
+
+	snd_pcm_lib_preallocate_pages_for_all(pcm,
+					SNDRV_DMA_TYPE_CONTINUOUS,
+					snd_dma_continuous_data(GFP_KERNEL),
+					MAX_BUFSIZE, MAX_BUFSIZE);
+	rt->instance = pcm;
+
+	chip->pcm = rt;
+	return 0;
+}
+
+void hiface_pcm_abort(struct shiface_chip *chip)
+{
+	struct pcm_runtime *rt = chip->pcm;
+	int i;
+
+	if (rt) {
+		rt->panic = true;
+
+		if (rt->playback.instance)
+			snd_pcm_stop(rt->playback.instance,
+					SNDRV_PCM_STATE_XRUN);
+
+		for (i = 0; i < PCM_N_URBS; i++)
+			usb_poison_urb(&rt->out_urbs[i].instance);
+	}
+}
+
+void hiface_pcm_destroy(struct shiface_chip *chip)
+{
+	struct pcm_runtime *rt = chip->pcm;
+	int i;
+
+	for (i = 0; i < PCM_N_URBS; i++)
+		kfree(&rt->out_urbs[i].buffer);
+
+	kfree(chip->pcm);
+	chip->pcm = NULL;
+}
