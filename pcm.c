@@ -501,17 +501,17 @@ int __devinit hiface_pcm_init(struct shiface_chip *chip)
 void hiface_pcm_abort(struct shiface_chip *chip)
 {
 	struct pcm_runtime *rt = chip->pcm;
-	int i;
 
 	if (rt) {
 		rt->panic = true;
 
-		if (rt->playback.instance)
+		if (rt->playback.instance) {
 			snd_pcm_stop(rt->playback.instance,
 					SNDRV_PCM_STATE_XRUN);
-
-		for (i = 0; i < PCM_N_URBS; i++)
-			usb_poison_urb(&rt->out_urbs[i].instance);
+		}
+		mutex_lock(&rt->stream_mutex);
+		hiface_pcm_stream_stop(rt);
+		mutex_unlock(&rt->stream_mutex);
 	}
 }
 
