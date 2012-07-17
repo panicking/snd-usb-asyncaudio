@@ -20,7 +20,7 @@
 #include "control.h"
 #include "chip.h"
 
-static __u16 rate_value[] = { 0x43, 0x4b, 0x4b, 0x4b, 0x4b, 0x4b };
+static __u16 rate_value[] = { 0x43, 0x4b, 0x42, 0x4a, 0x40, 0x48 };
 
 static int hiface_control_set_rate(struct control_runtime *rt, int rate)
 {
