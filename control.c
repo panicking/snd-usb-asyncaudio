@@ -44,7 +44,7 @@ static int hiface_control_set_rate(struct control_runtime *rt, int rate)
 #endif
 	ret = usb_control_msg(device, usb_sndctrlpipe(device, 0),
 				0x43, 0xb0,
-				rate_value[rate], 0, NULL, 0, USB_CTRL_SET_TIMEOUT);
+				rate_value[rate], 0, NULL, 0, 100);
 	return 0;
 }
 
