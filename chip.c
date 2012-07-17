@@ -37,12 +37,17 @@ static DEFINE_MUTEX(register_mutex);
 static void hiface_chip_abort(struct shiface_chip *chip)
 {
 	if (chip) {
+		/* Make sure that the userspace cannot create new request */
+		if (chip->card)
+			snd_card_disconnect(chip->card);
+
 		if (chip->pcm)
 			hiface_pcm_abort(chip);
+
 		if (chip->control)
 			hiface_control_abort(chip);
+
 		if (chip->card) {
-			snd_card_disconnect(chip->card);
 			snd_card_free_when_closed(chip->card);
 			chip->card = NULL;
 		}
