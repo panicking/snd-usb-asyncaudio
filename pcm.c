@@ -30,7 +30,7 @@ static const int rates_alsaid[] = {
 	SNDRV_PCM_RATE_176400, SNDRV_PCM_RATE_192000 };
 
 #define OUT_EP		2
-#define MAX_BUFSIZE	(PCM_N_URBS * PCM_MAX_PACKET_SIZE)
+#define MAX_BUFSIZE	(2 * PCM_N_URBS * PCM_MAX_PACKET_SIZE)
 
 enum { /* pcm streaming states */
 	STREAM_DISABLED, /* no pcm streaming */
@@ -38,6 +38,14 @@ enum { /* pcm streaming states */
 	STREAM_RUNNING, /* pcm streaming running */
 	STREAM_STOPPING
 };
+
+static inline void swap_data_4(char *dest, char *orig)
+{
+	*dest = *(orig + 2);
+	*(dest + 1) = *(orig + 3);
+	*(dest + 2) = *orig;
+	*(dest + 3) = *(orig + 1);
+}
 
 static const struct snd_pcm_hardware pcm_hw = {
 	.info = SNDRV_PCM_INFO_MMAP |
@@ -116,9 +124,9 @@ static void hiface_pcm_stream_stop(struct pcm_runtime *rt)
 	struct control_runtime *ctrl_rt = rt->chip->control;
 
 	if (rt->stream_state != STREAM_DISABLED) {
-		for (i = 0; i < PCM_N_URBS; i++) {
+		for (i = 0; i < PCM_N_URBS; i++)
 			usb_kill_urb(&rt->out_urbs[i].instance);
-		}
+
 		ctrl_rt->usb_streaming = false;
 		ctrl_rt->update_streaming(ctrl_rt);
 		rt->stream_state = STREAM_DISABLED;
@@ -134,6 +142,7 @@ static int hiface_pcm_stream_start(struct pcm_runtime *rt)
 		/* submit our out urbs zero init */
 		rt->stream_state = STREAM_STARTING;
 		for (i = 0; i < PCM_N_URBS; i++) {
+			memset(&rt->out_urbs[i].buffer, PCM_MAX_PACKET_SIZE, 0);
 			ret = usb_submit_urb(&rt->out_urbs[i].instance,
 					GFP_ATOMIC);
 			if (ret) {
@@ -141,13 +150,16 @@ static int hiface_pcm_stream_start(struct pcm_runtime *rt)
 				return ret;
 			}
 		}
+		printk(KERN_DEBUG "%s: wait for the wakeup event\n", __func__);
 
 		/* wait for first out urb to return (sent in in urb handler) */
 		wait_event_timeout(rt->stream_wait_queue, rt->stream_wait_cond,
 				HZ);
-		if (rt->stream_wait_cond)
+		if (rt->stream_wait_cond) {
+			printk(KERN_DEBUG
+				"%s: Stream is running wakeup event\n", __func__);
 			rt->stream_state = STREAM_RUNNING;
-		else {
+		} else {
 			hiface_pcm_stream_stop(rt);
 			return -EIO;
 		}
@@ -157,26 +169,56 @@ static int hiface_pcm_stream_start(struct pcm_runtime *rt)
 
 
 /* call with substream locked */
-static void hiface_pcm_playback(struct pcm_substream *sub,
+static int hiface_pcm_playback(struct pcm_substream *sub,
 		struct pcm_urb *urb)
 {
 	struct snd_pcm_runtime *alsa_rt = sub->instance->runtime;
 	u32 *dest, *source;
+	unsigned int stride;
+	int i;
+
+	stride = alsa_rt->frame_bits >> 3;
 	
 	if (alsa_rt->format == SNDRV_PCM_FORMAT_S32_LE)
 		dest = (u32 *) urb->buffer;
 	else {
 		printk(KERN_ERR "Unknown sample format.");
-		return;
+		return -EINVAL;
 	}
 
-	if (alsa_rt->dma_bytes > PCM_MAX_PACKET_SIZE) {
+	if (sub->dma_off + PCM_MAX_PACKET_SIZE <=
+		(alsa_rt->buffer_size * stride)) {
+		printk(KERN_DEBUG "%s: (1) buffer_size %x dma_offset %x\n",
+			__func__, (unsigned int) alsa_rt->buffer_size * stride,
+			(unsigned int) sub->dma_off);
+
 		source = (u32 *) (alsa_rt->dma_area + sub->dma_off);
-#if 0
-		memcpy(dest, source, PCM_MAX_PACKET_SIZE);
-#endif
-		sub->dma_off += PCM_MAX_PACKET_SIZE;
+		for (i = 0; i < PCM_MAX_PACKET_SIZE; i += 4)
+			swap_data_4((char *)dest + i, (char *)source + i);
+	} else {
+                /* wrap around at end of ring buffer */
+		unsigned int len = alsa_rt->buffer_size * stride - sub->dma_off;
+		source = (u32 *) (alsa_rt->dma_area + sub->dma_off);
+
+		printk(KERN_DEBUG "%s: (2) buffer_size %x dma_offset %x\n",
+			__func__, (unsigned int) alsa_rt->buffer_size * stride,
+			(unsigned int) sub->dma_off);
+		for (i = 0; i < len; i += 4)
+			swap_data_4((char *)dest + i, (char *)source + i);
+
+		source = (u32 *) alsa_rt->dma_area;
+
+		for (i = 0; i < PCM_MAX_PACKET_SIZE - len; i += 4)
+			swap_data_4((char *)dest + len + i,
+				    (char *)source + i);
 	}
+	sub->dma_off += PCM_MAX_PACKET_SIZE;
+	if (sub->dma_off >= (alsa_rt->buffer_size * stride))
+		sub->dma_off -= (alsa_rt->buffer_size * stride);
+
+	sub->period_off += PCM_MAX_PACKET_SIZE;
+
+	return 0;
 }
 
 static void hiface_pcm_out_urb_handler(struct urb *usb_urb)
@@ -200,14 +242,24 @@ static void hiface_pcm_out_urb_handler(struct urb *usb_urb)
 	sub = &rt->playback;
 	spin_lock_irqsave(&sub->lock, flags);
 	if (sub->active) {
-		hiface_pcm_playback(sub, out_urb);
+		int ret = 0;
+		ret = hiface_pcm_playback(sub, out_urb);
+		if (ret) {
+			spin_unlock_irqrestore(&sub->lock, flags);
+			goto out_fail;
+		}
+		if (sub->period_off >= sub->instance->runtime->period_size) {
+			sub->period_off %= sub->instance->runtime->period_size;
+			spin_unlock_irqrestore(&sub->lock, flags);
+			snd_pcm_period_elapsed(sub->instance);
+		} else {
+			spin_unlock_irqrestore(&sub->lock, flags);
+		}
+	} else {
 		spin_unlock_irqrestore(&sub->lock, flags);
-	} else
-		spin_unlock_irqrestore(&sub->lock, flags);
-
-#if 0
+	}
+out_fail:
 	usb_submit_urb(&out_urb->instance, GFP_ATOMIC);
-#endif
 }
 
 
@@ -303,6 +355,9 @@ static int hiface_pcm_prepare(struct snd_pcm_substream *alsa_sub)
 
 	mutex_lock(&rt->stream_mutex);
 
+	sub->dma_off = 0;
+	sub->period_off = 0;
+
 	if (rt->stream_state == STREAM_DISABLED) {
 		for (rt->rate = 0; rt->rate < ARRAY_SIZE(rates); rt->rate++)
 			if (alsa_rt->rate == rates[rt->rate])
@@ -373,10 +428,11 @@ static snd_pcm_uframes_t hiface_pcm_pointer(
 	if (rt->panic || !sub)
 		return SNDRV_PCM_STATE_XRUN;
 
+
 	spin_lock_irqsave(&sub->lock, flags);
 	ret = sub->dma_off;
 	spin_unlock_irqrestore(&sub->lock, flags);
-	return ret;
+	return ret / (alsa_sub->runtime->frame_bits >> 3);
 }
 
 static struct snd_pcm_ops pcm_ops = {
@@ -390,15 +446,16 @@ static struct snd_pcm_ops pcm_ops = {
 	.pointer = hiface_pcm_pointer,
 };
 
-static void __devinit hiface_pcm_init_urb(struct pcm_urb *urb,
+static int __devinit hiface_pcm_init_urb(struct pcm_urb *urb,
 		struct shiface_chip *chip, int ep,
 		void (*handler)(struct urb *))
 {
 	urb->chip = chip;
 	usb_init_urb(&urb->instance);
-	urb->buffer = kmalloc(PCM_MAX_PACKET_SIZE, GFP_KERNEL);
+	urb->buffer = kzalloc(PCM_MAX_PACKET_SIZE, GFP_KERNEL);
         usb_fill_bulk_urb(&urb->instance, chip->dev, usb_sndbulkpipe(chip->dev, ep),
 			  (void *)urb->buffer, PCM_MAX_PACKET_SIZE, handler, urb);
+	return 0;
 }
 
 int __devinit hiface_pcm_init(struct shiface_chip *chip)

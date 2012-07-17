@@ -23,7 +23,7 @@
 
 enum /* settings for pcm */
 {
-	PCM_N_URBS = 2, PCM_MAX_PACKET_SIZE = 4096
+	PCM_N_URBS = 8, PCM_MAX_PACKET_SIZE = 4096
 };
 
 struct pcm_urb {
