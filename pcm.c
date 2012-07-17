@@ -13,7 +13,6 @@
  * (at your option) any later version.
  */
 
-#define DEBUG
 #include "pcm.h"
 #include "chip.h"
 #include "control.h"
@@ -82,14 +81,14 @@ static int hiface_pcm_set_rate(struct pcm_runtime *rt)
 	ctrl_rt->usb_streaming = false;
 	ret = ctrl_rt->update_streaming(ctrl_rt);
 	if (ret < 0) {
-		printk(KERN_ERR "error stopping streaming while "
+		printk(KERN_ERR "Error stopping streaming while "
 				"setting samplerate %d.\n", rates[rt->rate]);
 		return ret;
 	}
 
 	ret = ctrl_rt->set_rate(ctrl_rt, rt->rate);
 	if (ret < 0) {
-		printk(KERN_ERR "error setting samplerate %d.\n",
+		printk(KERN_ERR "Error setting samplerate %d.\n",
 				rates[rt->rate]);
 		return ret;
 	}
@@ -97,7 +96,7 @@ static int hiface_pcm_set_rate(struct pcm_runtime *rt)
 	ctrl_rt->usb_streaming = true;
 	ret = ctrl_rt->update_streaming(ctrl_rt);
 	if (ret < 0) {
-		printk(KERN_ERR "error starting streaming while "
+		printk(KERN_ERR "Error starting streaming while "
 				"setting samplerate %d.\n", rates[rt->rate]);
 		return ret;
 	}
@@ -113,7 +112,7 @@ static struct pcm_substream *hiface_pcm_get_substream(
 	if (alsa_sub->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		return &rt->playback;
 
-	printk(KERN_ERR "error getting pcm substream slot.\n");
+	pr_debug("Error getting pcm substream slot.\n");
 	return NULL;
 }
 
@@ -150,14 +149,12 @@ static int hiface_pcm_stream_start(struct pcm_runtime *rt)
 				return ret;
 			}
 		}
-		printk(KERN_DEBUG "%s: wait for the wakeup event\n", __func__);
 
 		/* wait for first out urb to return (sent in in urb handler) */
 		wait_event_timeout(rt->stream_wait_queue, rt->stream_wait_cond,
 				HZ);
 		if (rt->stream_wait_cond) {
-			printk(KERN_DEBUG
-				"%s: Stream is running wakeup event\n", __func__);
+			pr_debug("%s: Stream is running wakeup event\n", __func__);
 			rt->stream_state = STREAM_RUNNING;
 		} else {
 			hiface_pcm_stream_stop(rt);
@@ -188,7 +185,7 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 
 	if (sub->dma_off + PCM_MAX_PACKET_SIZE <=
 		(alsa_rt->buffer_size * stride)) {
-		printk(KERN_DEBUG "%s: (1) buffer_size %x dma_offset %x\n",
+		pr_debug("%s: (1) buffer_size %x dma_offset %x\n",
 			__func__, (unsigned int) alsa_rt->buffer_size * stride,
 			(unsigned int) sub->dma_off);
 
@@ -200,7 +197,7 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 		unsigned int len = alsa_rt->buffer_size * stride - sub->dma_off;
 		source = (u32 *) (alsa_rt->dma_area + sub->dma_off);
 
-		printk(KERN_DEBUG "%s: (2) buffer_size %x dma_offset %x\n",
+		pr_debug("%s: (2) buffer_size %x dma_offset %x\n",
 			__func__, (unsigned int) alsa_rt->buffer_size * stride,
 			(unsigned int) sub->dma_off);
 		for (i = 0; i < len; i += 4)
@@ -228,7 +225,7 @@ static void hiface_pcm_out_urb_handler(struct urb *usb_urb)
 	struct pcm_substream *sub;
 	unsigned long flags;
 
-	printk(KERN_ERR "%s: func\n", __func__);
+	pr_debug("%s: func\n", __func__);
 
 	if (usb_urb->status || rt->panic || rt->stream_state == STREAM_STOPPING)
 		return;
@@ -272,7 +269,7 @@ static int hiface_pcm_open(struct snd_pcm_substream *alsa_sub)
 	if (rt->panic)
 		return -EPIPE;
 
-	printk(KERN_ERR "%s: func\n", __func__);
+	pr_debug("%s: func\n", __func__);
 
 	mutex_lock(&rt->stream_mutex);
 	alsa_rt->hw = pcm_hw;
@@ -286,7 +283,7 @@ static int hiface_pcm_open(struct snd_pcm_substream *alsa_sub)
 
 	if (!sub) {
 		mutex_unlock(&rt->stream_mutex);
-		printk(KERN_ERR "invalid stream type.\n");
+		printk(KERN_ERR "Invalid stream type.\n");
 		return -EINVAL;
 	}
 
@@ -305,7 +302,7 @@ static int hiface_pcm_close(struct snd_pcm_substream *alsa_sub)
 	if (rt->panic)
 		return 0;
 
-	printk(KERN_ERR "%s: func\n", __func__);
+	pr_debug("%s: func\n", __func__);
 
 	mutex_lock(&rt->stream_mutex);
 	if (sub) {
@@ -328,14 +325,14 @@ static int hiface_pcm_close(struct snd_pcm_substream *alsa_sub)
 static int hiface_pcm_hw_params(struct snd_pcm_substream *alsa_sub,
 		struct snd_pcm_hw_params *hw_params)
 {
-	printk(KERN_ERR "%s: func\n", __func__);
+	pr_debug("%s: func\n", __func__);
 	return snd_pcm_lib_malloc_pages(alsa_sub,
 			params_buffer_bytes(hw_params));
 }
 
 static int hiface_pcm_hw_free(struct snd_pcm_substream *alsa_sub)
 {
-	printk(KERN_ERR "%s: func\n", __func__);
+	pr_debug("%s: func\n", __func__);
 	return snd_pcm_lib_free_pages(alsa_sub);
 }
 
@@ -346,7 +343,7 @@ static int hiface_pcm_prepare(struct snd_pcm_substream *alsa_sub)
 	struct snd_pcm_runtime *alsa_rt = alsa_sub->runtime;
 	int ret;
 
-	printk(KERN_ERR "%s: func\n", __func__);
+	pr_debug("%s: func\n", __func__);
 
 	if (rt->panic)
 		return -EPIPE;
@@ -364,7 +361,7 @@ static int hiface_pcm_prepare(struct snd_pcm_substream *alsa_sub)
 				break;
 		if (rt->rate == ARRAY_SIZE(rates)) {
 			mutex_unlock(&rt->stream_mutex);
-			printk(KERN_ERR "invalid rate %d in prepare.\n",
+			printk(KERN_ERR "Invalid rate %d in prepare.\n",
 					alsa_rt->rate);
 			return -EINVAL;
 		}
@@ -390,7 +387,7 @@ static int hiface_pcm_trigger(struct snd_pcm_substream *alsa_sub, int cmd)
 	struct pcm_runtime *rt = snd_pcm_substream_chip(alsa_sub);
 	unsigned long flags;
 
-	printk(KERN_ERR "%s: func\n", __func__);
+	pr_debug("%s: func\n", __func__);
 
 	if (rt->panic)
 		return -EPIPE;
@@ -483,7 +480,7 @@ int __devinit hiface_pcm_init(struct shiface_chip *chip)
 	ret = snd_pcm_new(chip->card, "HiFace M2Tech", 0, 1, 0, &pcm);
 	if (ret < 0) {
 		kfree(rt);
-		printk(KERN_ERR "cannot create pcm instance.\n");
+		printk(KERN_ERR "Cannot create pcm instance.\n");
 		return ret;
 	}
 
