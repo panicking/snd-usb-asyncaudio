@@ -30,6 +30,7 @@ struct pcm_urb {
 	struct shiface_chip *chip;
 
 	struct urb instance;
+	struct usb_anchor submitted;
 	void *buffer;
 };
 

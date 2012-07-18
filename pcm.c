@@ -119,12 +119,18 @@ static struct pcm_substream *hiface_pcm_get_substream(
 /* call with stream_mutex locked */
 static void hiface_pcm_stream_stop(struct pcm_runtime *rt)
 {
-	int i;
+	int i, time;
 	struct control_runtime *ctrl_rt = rt->chip->control;
 
 	if (rt->stream_state != STREAM_DISABLED) {
-		for (i = 0; i < PCM_N_URBS; i++)
+		for (i = 0; i < PCM_N_URBS; i++) {
+			time = usb_wait_anchor_empty_timeout(
+					&rt->out_urbs[i].submitted, 1000);
+			if (!time)
+				usb_kill_anchored_urbs(
+					&rt->out_urbs[i].submitted);
 			usb_kill_urb(&rt->out_urbs[i].instance);
+		}
 
 		ctrl_rt->usb_streaming = false;
 		ctrl_rt->update_streaming(ctrl_rt);
@@ -142,6 +148,8 @@ static int hiface_pcm_stream_start(struct pcm_runtime *rt)
 		rt->stream_state = STREAM_STARTING;
 		for (i = 0; i < PCM_N_URBS; i++) {
 			memset(&rt->out_urbs[i].buffer, PCM_MAX_PACKET_SIZE, 0);
+			usb_anchor_urb(&rt->out_urbs[i].instance,
+				       &rt->out_urbs[i].submitted);
 			ret = usb_submit_urb(&rt->out_urbs[i].instance,
 					GFP_ATOMIC);
 			if (ret) {
@@ -450,8 +458,11 @@ static int __devinit hiface_pcm_init_urb(struct pcm_urb *urb,
 	urb->chip = chip;
 	usb_init_urb(&urb->instance);
 	urb->buffer = kzalloc(PCM_MAX_PACKET_SIZE, GFP_KERNEL);
-        usb_fill_bulk_urb(&urb->instance, chip->dev, usb_sndbulkpipe(chip->dev, ep),
-			  (void *)urb->buffer, PCM_MAX_PACKET_SIZE, handler, urb);
+	usb_fill_bulk_urb(&urb->instance, chip->dev,
+			  usb_sndbulkpipe(chip->dev, ep), (void *)urb->buffer,
+			  PCM_MAX_PACKET_SIZE, handler, urb);
+	init_usb_anchor(&urb->submitted);
+
 	return 0;
 }
 
@@ -521,7 +532,7 @@ void hiface_pcm_destroy(struct shiface_chip *chip)
 	int i;
 
 	for (i = 0; i < PCM_N_URBS; i++)
-		kfree(&rt->out_urbs[i].buffer);
+		kfree(rt->out_urbs[i].buffer);
 
 	kfree(chip->pcm);
 	chip->pcm = NULL;
