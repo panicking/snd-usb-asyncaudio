@@ -35,6 +35,7 @@ struct control_runtime {
 	struct shiface_chip *chip;
 
 	bool usb_streaming;
+	int stored_rate;
 };
 
 int __devinit hiface_control_init(struct shiface_chip *chip);

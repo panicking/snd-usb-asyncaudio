@@ -30,6 +30,11 @@ static int hiface_control_set_rate(struct control_runtime *rt, int rate)
 	if (rate < 0 || rate >= CONTROL_N_RATES)
 		return -EINVAL;
 
+	if (rate == rt->stored_rate)
+		return 0;
+
+	rt->stored_rate = rate;
+
 	printk(KERN_INFO "%s: set rate %d\n", __func__, rate);
 
 	ret = usb_set_interface(device, 0, 0);
@@ -45,6 +50,7 @@ static int hiface_control_set_rate(struct control_runtime *rt, int rate)
 	ret = usb_control_msg(device, usb_sndctrlpipe(device, 0),
 				0x43, 0xb0,
 				rate_value[rate], 0, NULL, 0, 100);
+
 	return 0;
 }
 
@@ -64,6 +70,7 @@ int __devinit hiface_control_init(struct shiface_chip *chip)
 	rt->chip = chip;
 	rt->update_streaming = hiface_control_streaming_update;
 	rt->set_rate = hiface_control_set_rate;
+	rt->stored_rate = -1;
 
 	hiface_control_streaming_update(rt);
 
