@@ -1,9 +1,11 @@
 /*
- * Linux driver for TerraTec DMX 6Fire USB
+ * Linux driver for HiFace M2Tech
  *
- * Author:	Torsten Schenk <torsten.schenk@zoho.com>
- * Created:	Jan 01, 2011
- * Copyright:	(C) Torsten Schenk
+ * PCM driver
+ *
+ * Author:	Michael Trimarchi <michael@amarulasolutions.com>
+ * Created:	15 July 2012
+ * Copyright:	(C) Amarula Solutions B.V.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
