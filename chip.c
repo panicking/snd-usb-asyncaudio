@@ -171,6 +171,11 @@ static struct usb_device_id device_table[] = {
 		.match_flags = USB_DEVICE_ID_MATCH_DEVICE,
 		.idVendor = 0x04b4,
 		.idProduct = 0x930b
+	},{
+		.match_flags = USB_DEVICE_ID_MATCH_DEVICE,
+		.idVendor = 0x04b4,
+		.idProduct = 0x0384
+
 	},
 	{}
 };
