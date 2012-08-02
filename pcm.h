@@ -57,7 +57,7 @@ struct pcm_runtime {
 	bool stream_wait_cond;
 };
 
-int __devinit hiface_pcm_init(struct shiface_chip *chip);
+int __devinit hiface_pcm_init(struct shiface_chip *chip, const char *pcm_stream_name);
 void hiface_pcm_abort(struct shiface_chip *chip);
 void hiface_pcm_destroy(struct shiface_chip *chip);
 #endif /* USB6FIRE_PCM_H */

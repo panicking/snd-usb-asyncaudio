@@ -37,7 +37,6 @@ static struct usb_device *devices[SNDRV_CARDS] = SNDRV_DEFAULT_PTR;
 static DEFINE_MUTEX(register_mutex);
 
 struct snd_vendor_quirk {
-	const char *driver_name;
 	const char *driver_short_name;
 };
 
@@ -117,15 +116,15 @@ static int __devinit hiface_chip_probe(struct usb_interface *intf,
 		return ret;
 	}
 
+	strcpy(card->driver, "snd-async-audio");
+
 	if (usb_id->driver_info != 0) {
 		struct snd_vendor_quirk *driver_info;
 
 		driver_info = (struct snd_vendor_quirk *)usb_id->driver_info;
 
-		strcpy(card->driver, driver_info->driver_name);
 		strcpy(card->shortname, driver_info->driver_short_name);
 	} else {
-		strcpy(card->driver, "M2Tech-asyncaudio");
 		strcpy(card->shortname, "M2Tech generic audio");
 	}
 
@@ -140,7 +139,7 @@ static int __devinit hiface_chip_probe(struct usb_interface *intf,
 	chip->intf_count = 1;
 	chip->card = card;
 
-	ret = hiface_pcm_init(chip);
+	ret = hiface_pcm_init(chip, card->shortname);
 	if (ret < 0) {
 		hiface_chip_destroy(chip);
 		return ret;
@@ -188,119 +187,102 @@ static struct usb_device_id device_table[] = {
 	{
 		USB_DEVICE(0x04b4, 0x930b),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
-			.driver_name = "M2Tech AsyncAudio",
 			.driver_short_name = "hiFace",
 		}
 	},
 	{
 		USB_DEVICE(0x04b4, 0x0384),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
-			.driver_name = "M2Tech AsyncAudio",
 			.driver_short_name = "Young",
 		}
 	},
 	{
 		USB_DEVICE(0x04b4, 0x931E),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
-			.driver_name = "AUDIA AsyncAudio",
 			.driver_short_name = "AUDIA",
 		}
 	},
 	{
 		USB_DEVICE(0x04b4, 0x931D),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
-			.driver_name = "Corrson AsyncAudio",
 			.driver_short_name = "Corrson",
 		}
 	},
 	{
 		USB_DEVICE(0x04b4, 0x9320),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
-			.driver_name = "Empirical AsyncAudio",
 			.driver_short_name = "Empirical",
 		}
 	},
 	{
 		USB_DEVICE(0x04b4, 0x931B),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
-			.driver_name = "North Star AsyncAudio",
 			.driver_short_name = "North Star",
 		}
 	},
 	{
 		USB_DEVICE(0x04b4, 0x9321),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
-			.driver_name = "Rockna AsyncAudio",
 			.driver_short_name = "Rockna",
 		}
 	},
 	{
 		USB_DEVICE(0x04b4, 0x931F),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
-			.driver_name = "SL Audio AsyncAudio",
 			.driver_short_name = "SL Audio",
 		}
 	},
 	{
 		USB_DEVICE(0x04b4, 0x931C),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
-			.driver_name = "W4S AsyncAudio",
 			.driver_short_name = "W4S Young",
 		}
 	},
 	{
 		USB_DEVICE(0x245F, 0x931C),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
-			.driver_name = "CHORD AsyncAudio",
 			.driver_short_name = "CHORD",
 		}
 	},
 	{
 		USB_DEVICE(0x25C6, 0x9002),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
-			.driver_name = "Vitus AsyncAudio",
 			.driver_short_name = "Vitus",
 		}
 	},
 	{
 		USB_DEVICE(0X249C, 0x9006),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
-			.driver_name = "Computer Audio Design AsyncAudio",
 			.driver_short_name = "CAD",
 		}
 	},
 	{
 		USB_DEVICE(0X249C, 0x932C),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
-			.driver_name = "Eeaudio AsyncAudio",
 			.driver_short_name = "Eeaudio",
 		}
 	},
 	{
 		USB_DEVICE(0X249C, 0x9002),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
-			.driver_name = "Metronome AsyncAudio",
 			.driver_short_name = "Metronome",
 		}
 	},
 	{
 		USB_DEVICE(0X249C, 0x9001),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
-			.driver_name = "Pathos AsyncAudio",
 			.driver_short_name = "Pathos",
 		}
 	},
 	{
 		USB_DEVICE(0X249C, 0x931C),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
-			.driver_name = "Rotel AsyncAudio",
 			.driver_short_name = "Rotel",
 		}
 	},
 	{
 		USB_DEVICE(0X249C, 0x9008),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
-			.driver_name = "Audio Esclusive AsyncAudio",
 			.driver_short_name = "Audio Esclusive",
 		}
 	},
