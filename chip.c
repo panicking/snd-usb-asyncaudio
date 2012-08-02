@@ -36,6 +36,11 @@ static struct usb_device *devices[SNDRV_CARDS] = SNDRV_DEFAULT_PTR;
 
 static DEFINE_MUTEX(register_mutex);
 
+struct snd_vendor_quirk {
+	const char *driver_name;
+	const char *driver_short_name;
+};
+
 static void hiface_chip_abort(struct shiface_chip *chip)
 {
 	if (chip) {
@@ -111,8 +116,19 @@ static int __devinit hiface_chip_probe(struct usb_interface *intf,
 		pr_err("cannot create alsa card.\n");
 		return ret;
 	}
-	strcpy(card->driver, "M2Tech-Hiface");
-	strcpy(card->shortname, "M2Tech HIFACE");
+
+	if (usb_id->driver_info != 0) {
+		struct snd_vendor_quirk *driver_info;
+
+		driver_info = (struct snd_vendor_quirk *)usb_id->driver_info;
+
+		strcpy(card->driver, driver_info->driver_name);
+		strcpy(card->shortname, driver_info->driver_short_name);
+	} else {
+		strcpy(card->driver, "M2Tech-asyncaudio");
+		strcpy(card->shortname, "M2Tech generic audio");
+	}
+
 	sprintf(card->longname, "%s at %d:%d", card->shortname,
 			device->bus->busnum, device->devnum);
 	snd_card_set_dev(card, &intf->dev);
@@ -170,15 +186,18 @@ static void hiface_chip_disconnect(struct usb_interface *intf)
 
 static struct usb_device_id device_table[] = {
 	{
-		.match_flags = USB_DEVICE_ID_MATCH_DEVICE,
-		.idVendor = 0x04b4,
-		.idProduct = 0x930b
+		USB_DEVICE(0x04b4, 0x930b),
+		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
+			.driver_name = "M2Tech Hiface",
+			.driver_short_name = "Hiface",
+		}
 	},
 	{
-		.match_flags = USB_DEVICE_ID_MATCH_DEVICE,
-		.idVendor = 0x04b4,
-		.idProduct = 0x0384
-
+		USB_DEVICE(0x04b4, 0x0384),
+		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
+			.driver_name = "M2Tech Young",
+			.driver_short_name = "Young",
+		}
 	},
 	{}
 };
