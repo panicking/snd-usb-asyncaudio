@@ -21,10 +21,8 @@
 
 #include "common.h"
 
-enum /* settings for pcm */
-{
-	PCM_N_URBS = 8, PCM_MAX_PACKET_SIZE = 4096
-};
+#define PCM_N_URBS		8
+#define PCM_MAX_PACKET_SIZE	4096
 
 struct pcm_urb {
 	struct shiface_chip *chip;

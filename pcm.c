@@ -123,9 +123,11 @@ static void hiface_pcm_stream_stop(struct pcm_runtime *rt)
 	struct control_runtime *ctrl_rt = rt->chip->control;
 
 	if (rt->stream_state != STREAM_DISABLED) {
+		rt->stream_state = STREAM_STOPPING;
+
 		for (i = 0; i < PCM_N_URBS; i++) {
 			time = usb_wait_anchor_empty_timeout(
-					&rt->out_urbs[i].submitted, 1000);
+					&rt->out_urbs[i].submitted, 100);
 			if (!time)
 				usb_kill_anchored_urbs(
 					&rt->out_urbs[i].submitted);
@@ -162,7 +164,8 @@ static int hiface_pcm_stream_start(struct pcm_runtime *rt)
 		wait_event_timeout(rt->stream_wait_queue, rt->stream_wait_cond,
 				HZ);
 		if (rt->stream_wait_cond) {
-			pr_debug("%s: Stream is running wakeup event\n", __func__);
+			pr_debug("%s: Stream is running wakeup event\n",
+				 __func__);
 			rt->stream_state = STREAM_RUNNING;
 		} else {
 			hiface_pcm_stream_stop(rt);
@@ -187,7 +190,7 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 	if (alsa_rt->format == SNDRV_PCM_FORMAT_S32_LE)
 		dest = (u32 *) urb->buffer;
 	else {
-		printk(KERN_ERR "Unknown sample format.");
+		pr_err("Unknown sample format\n");
 		return -EINVAL;
 	}
 
@@ -201,7 +204,7 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 		for (i = 0; i < PCM_MAX_PACKET_SIZE; i += 4)
 			swap_data_4((char *)dest + i, (char *)source + i);
 	} else {
-                /* wrap around at end of ring buffer */
+		/* wrap around at end of ring buffer */
 		unsigned int len = alsa_rt->buffer_size * stride - sub->dma_off;
 		source = (u32 *) (alsa_rt->dma_area + sub->dma_off);
 
@@ -240,8 +243,8 @@ static void hiface_pcm_out_urb_handler(struct urb *usb_urb)
 
 	if (rt->stream_state == STREAM_STARTING) {
 		rt->stream_wait_cond = true;
-                wake_up(&rt->stream_wait_queue);
-        }
+		wake_up(&rt->stream_wait_queue);
+	}
 
 	/* now send our playback data (if a free out urb was found) */
 	sub = &rt->playback;
@@ -291,7 +294,7 @@ static int hiface_pcm_open(struct snd_pcm_substream *alsa_sub)
 
 	if (!sub) {
 		mutex_unlock(&rt->stream_mutex);
-		printk(KERN_ERR "Invalid stream type.\n");
+		pr_err("Invalid stream type\n");
 		return -EINVAL;
 	}
 
@@ -369,7 +372,7 @@ static int hiface_pcm_prepare(struct snd_pcm_substream *alsa_sub)
 				break;
 		if (rt->rate == ARRAY_SIZE(rates)) {
 			mutex_unlock(&rt->stream_mutex);
-			printk(KERN_ERR "Invalid rate %d in prepare.\n",
+			pr_err("Invalid rate %d in prepare\n",
 					alsa_rt->rate);
 			return -EINVAL;
 		}
@@ -491,7 +494,7 @@ int __devinit hiface_pcm_init(struct shiface_chip *chip)
 	ret = snd_pcm_new(chip->card, "HiFace M2Tech", 0, 1, 0, &pcm);
 	if (ret < 0) {
 		kfree(rt);
-		printk(KERN_ERR "Cannot create pcm instance.\n");
+		pr_err("Cannot create pcm instance\n");
 		return ret;
 	}
 
