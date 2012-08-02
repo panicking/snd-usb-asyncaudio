@@ -200,7 +200,6 @@ static struct usb_device_id device_table[] = {
 		}
 	},
 	{
-		{
 		USB_DEVICE(0x04b4, 0x931E),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
 			.driver_name = "AUDIA AsyncAudio",
