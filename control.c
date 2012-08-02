@@ -35,18 +35,18 @@ static int hiface_control_set_rate(struct control_runtime *rt, int rate)
 
 	rt->stored_rate = rate;
 
-	printk(KERN_INFO "%s: set rate %d\n", __func__, rate);
+	pr_info("%s: set rate %d\n", __func__, rate);
 
 	ret = usb_set_interface(device, 0, 0);
 	if (ret < 0)
 		return ret;
 
-#if 0
-	USBIO: Vendor 0xb0(wValue=0x0043, wIndex=0x0000)
-		43 b0 43 00 00 00 00 00
-	USBIO: Vendor 0xb0(wValue=0x004b, wIndex=0x0000)
-		43 b0 4b 00 00 00 00 00
-#endif
+	/*
+	 * USBIO: Vendor 0xb0(wValue=0x0043, wIndex=0x0000)
+	 * 43 b0 43 00 00 00 00 00
+	 * USBIO: Vendor 0xb0(wValue=0x004b, wIndex=0x0000)
+	 * 43 b0 4b 00 00 00 00 00
+	 */
 	ret = usb_control_msg(device, usb_sndctrlpipe(device, 0),
 				0x43, 0xb0,
 				rate_value[rate], 0, NULL, 0, 100);
