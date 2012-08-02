@@ -76,7 +76,7 @@ static int __devinit hiface_chip_probe(struct usb_interface *intf,
 	int regidx = -1; /* index in module parameter array */
 	struct snd_card *card = NULL;
 
-	printk(KERN_INFO "Probe m2-tech driver.\n");
+	pr_info("Probe m2-tech driver.\n");
 
 	/* look if we already serve this card and return if so */
 	mutex_lock(&register_mutex);
@@ -92,7 +92,7 @@ static int __devinit hiface_chip_probe(struct usb_interface *intf,
 	}
 	if (regidx < 0) {
 		mutex_unlock(&register_mutex);
-		printk(KERN_ERR "too many cards registered.\n");
+		pr_err("too many cards registered.\n");
 		return -ENODEV;
 	}
 	devices[regidx] = device;
@@ -100,13 +100,13 @@ static int __devinit hiface_chip_probe(struct usb_interface *intf,
 
 	/* if we are here, card can be registered in alsa. */
 	if (usb_set_interface(device, 0, 0) != 0) {
-		printk(KERN_ERR "can't set first interface.\n");
+		pr_err("can't set first interface.\n");
 		return -EIO;
 	}
 	ret = snd_card_create(index[regidx], id[regidx], THIS_MODULE,
 			sizeof(struct shiface_chip), &card);
 	if (ret < 0) {
-		printk(KERN_ERR "cannot create alsa card.\n");
+		pr_err("cannot create alsa card.\n");
 		return ret;
 	}
 	strcpy(card->driver, "M2Tech-Hiface");
@@ -136,7 +136,7 @@ static int __devinit hiface_chip_probe(struct usb_interface *intf,
 
 	ret = snd_card_register(card);
 	if (ret < 0) {
-		printk(KERN_ERR "cannot register card.");
+		pr_err("cannot register card\n");
 		hiface_chip_destroy(chip);
 		return ret;
 	}
@@ -171,7 +171,8 @@ static struct usb_device_id device_table[] = {
 		.match_flags = USB_DEVICE_ID_MATCH_DEVICE,
 		.idVendor = 0x04b4,
 		.idProduct = 0x930b
-	},{
+	},
+	{
 		.match_flags = USB_DEVICE_ID_MATCH_DEVICE,
 		.idVendor = 0x04b4,
 		.idProduct = 0x0384
@@ -193,12 +194,12 @@ module_usb_driver(snd_usb_driver);
 #else
 static int __init snd_module_init(void)
 {
-        return usb_register(&snd_usb_driver);
+	return usb_register(&snd_usb_driver);
 }
 
 static void __exit snd_module_exit(void)
 {
-        usb_deregister(&snd_usb_driver);
+	usb_deregister(&snd_usb_driver);
 }
 
 module_init(snd_module_init)
