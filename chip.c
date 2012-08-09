@@ -3,7 +3,7 @@
  *
  * Author:	Michael Trimarchi <michael@amarulasolutions.com>
  * Created:	June 01, 2012
- * Copyright:	(C) Amarula Solutions
+ * Copyright:	(C) M2TECH S.r.l and Amarula Solutions B.V.
  *
  * The driver is based on the work done in TerraTec DMX 6Fire USB
  *

@@ -3,7 +3,7 @@
  *
  * Author:      Michael Trimarchi <michael@amarulasolutions.com>
  * Created:     June 01, 2012
- * Copyright:   (C) Amarula Solutions
+ * Copyright:	(C) M2TECH S.r.l and Amarula Solutions B.V.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

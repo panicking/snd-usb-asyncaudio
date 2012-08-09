@@ -5,7 +5,7 @@
  *
  * Author:	Michael Trimarchi <michael@amarulasolutions.com>
  * Created:	15 July 2012
- * Copyright:	(C) Amarula Solutions B.V.
+ * Copyright:	(C) M2TECH S.r.l and Amarula Solutions B.V.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
