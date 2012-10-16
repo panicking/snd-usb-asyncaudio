@@ -13,8 +13,8 @@
  * (at your option) any later version.
  */
 
-#ifndef USB6FIRE_PCM_H
-#define USB6FIRE_PCM_H
+#ifndef HIFACE_PCM_H
+#define HIFACE_PCM_H
 
 #include <sound/pcm.h>
 #include <linux/mutex.h>
@@ -64,4 +64,4 @@ int __devinit hiface_pcm_init(struct shiface_chip *chip,
 			      u8 extra_freq);
 void hiface_pcm_abort(struct shiface_chip *chip);
 void hiface_pcm_destroy(struct shiface_chip *chip);
-#endif /* USB6FIRE_PCM_H */
+#endif /* HIFACE_PCM_H */

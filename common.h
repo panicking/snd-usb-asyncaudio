@@ -25,5 +25,5 @@
 struct shiface_chip;
 struct pcm_runtime;
 struct control_runtime;
-#endif /* USB6FIRE_COMMON_H */
+#endif /* HIFACE_COMMON_H */
 
