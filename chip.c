@@ -82,7 +82,7 @@ static int __devinit hiface_chip_probe(struct usb_interface *intf,
 	struct usb_device *device = interface_to_usbdev(intf);
 	int regidx = -1; /* index in module parameter array */
 	struct snd_card *card = NULL;
-	struct snd_vendor_quirk *driver_info;
+	struct snd_vendor_quirk *driver_info = NULL;
 
 
 	pr_info("Probe m2-tech driver.\n");
