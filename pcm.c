@@ -54,6 +54,7 @@ static const struct snd_pcm_hardware pcm_hw = {
 	.info = SNDRV_PCM_INFO_MMAP |
 		SNDRV_PCM_INFO_INTERLEAVED |
 		SNDRV_PCM_INFO_BLOCK_TRANSFER |
+		SNDRV_PCM_INFO_PAUSE |
 		SNDRV_PCM_INFO_MMAP_VALID |
 		SNDRV_PCM_INFO_BATCH,
 
@@ -269,6 +270,7 @@ static void hiface_pcm_out_urb_handler(struct urb *usb_urb)
 			spin_unlock_irqrestore(&sub->lock, flags);
 		}
 	} else {
+		memset(out_urb->buffer, 0, PCM_MAX_PACKET_SIZE);
 		spin_unlock_irqrestore(&sub->lock, flags);
 	}
 out_fail:
