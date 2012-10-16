@@ -24,11 +24,13 @@ enum {
 	OUT_N_CHANNELS = 2
 };
 
-static const int rates[] = { 44100, 48000, 88200, 96000, 176400, 192000 };
+static const int rates[] = { 44100, 48000, 88200, 96000, 176400, 192000,
+			     352800, 384000 };
 static const int rates_alsaid[] = {
 	SNDRV_PCM_RATE_44100, SNDRV_PCM_RATE_48000,
 	SNDRV_PCM_RATE_88200, SNDRV_PCM_RATE_96000,
-	SNDRV_PCM_RATE_176400, SNDRV_PCM_RATE_192000 };
+	SNDRV_PCM_RATE_176400, SNDRV_PCM_RATE_192000,
+	SNDRV_PCM_RATE_KNOT, SNDRV_PCM_RATE_KNOT };
 
 #define OUT_EP		2
 #define MAX_BUFSIZE	(2 * PCM_N_URBS * PCM_MAX_PACKET_SIZE)
@@ -62,7 +64,8 @@ static const struct snd_pcm_hardware pcm_hw = {
 		SNDRV_PCM_RATE_88200 |
 		SNDRV_PCM_RATE_96000 |
 		SNDRV_PCM_RATE_176400 |
-		SNDRV_PCM_RATE_192000,
+		SNDRV_PCM_RATE_192000 |
+		SNDRV_PCM_RATE_KNOT,
 
 	.rate_min = 44100,
 	.rate_max = 192000,
@@ -272,7 +275,6 @@ out_fail:
 	usb_submit_urb(&out_urb->instance, GFP_ATOMIC);
 }
 
-
 static int hiface_pcm_open(struct snd_pcm_substream *alsa_sub)
 {
 	struct pcm_runtime *rt = snd_pcm_substream_chip(alsa_sub);
@@ -299,6 +301,9 @@ static int hiface_pcm_open(struct snd_pcm_substream *alsa_sub)
 		pr_err("Invalid stream type\n");
 		return -EINVAL;
 	}
+
+	if (rt->extra_freq)
+		alsa_rt->hw.rate_max = 384000;
 
 	sub->instance = alsa_sub;
 	sub->active = false;
@@ -471,7 +476,9 @@ static int __devinit hiface_pcm_init_urb(struct pcm_urb *urb,
 	return 0;
 }
 
-int __devinit hiface_pcm_init(struct shiface_chip *chip, const char *pcm_stream_name)
+int __devinit hiface_pcm_init(struct shiface_chip *chip,
+			      const char *pcm_stream_name,
+			      u8 extra_freq)
 {
 	int i;
 	int ret;
@@ -485,6 +492,9 @@ int __devinit hiface_pcm_init(struct shiface_chip *chip, const char *pcm_stream_
 	rt->chip = chip;
 	rt->stream_state = STREAM_DISABLED;
 	rt->rate = ARRAY_SIZE(rates);
+	if (extra_freq)
+		rt->extra_freq = 1;
+
 	init_waitqueue_head(&rt->stream_wait_queue);
 	mutex_init(&rt->stream_mutex);
 	spin_lock_init(&rt->playback.lock);

@@ -38,6 +38,7 @@ static DEFINE_MUTEX(register_mutex);
 
 struct snd_vendor_quirk {
 	const char *driver_short_name;
+	u8 extra_freq;
 };
 
 static void hiface_chip_abort(struct shiface_chip *chip)
@@ -81,6 +82,8 @@ static int __devinit hiface_chip_probe(struct usb_interface *intf,
 	struct usb_device *device = interface_to_usbdev(intf);
 	int regidx = -1; /* index in module parameter array */
 	struct snd_card *card = NULL;
+	struct snd_vendor_quirk *driver_info;
+
 
 	pr_info("Probe m2-tech driver.\n");
 
@@ -119,8 +122,6 @@ static int __devinit hiface_chip_probe(struct usb_interface *intf,
 	strcpy(card->driver, "snd-async-audio");
 
 	if (usb_id->driver_info != 0) {
-		struct snd_vendor_quirk *driver_info;
-
 		driver_info = (struct snd_vendor_quirk *)usb_id->driver_info;
 
 		strcpy(card->shortname, driver_info->driver_short_name);
@@ -139,7 +140,8 @@ static int __devinit hiface_chip_probe(struct usb_interface *intf,
 	chip->intf_count = 1;
 	chip->card = card;
 
-	ret = hiface_pcm_init(chip, card->shortname);
+	ret = hiface_pcm_init(chip, card->shortname,
+			      driver_info ? driver_info->extra_freq : 0);
 	if (ret < 0) {
 		hiface_chip_destroy(chip);
 		return ret;
@@ -194,6 +196,7 @@ static struct usb_device_id device_table[] = {
 		USB_DEVICE(0x04b4, 0x0384),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
 			.driver_short_name = "Young",
+			.extra_freq = 1,
 		}
 	},
 	{

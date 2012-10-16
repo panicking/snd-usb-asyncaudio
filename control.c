@@ -22,7 +22,7 @@
 #include "control.h"
 #include "chip.h"
 
-static __u16 rate_value[] = { 0x43, 0x4b, 0x42, 0x4a, 0x40, 0x48 };
+static __u16 rate_value[] = { 0x43, 0x4b, 0x42, 0x4a, 0x40, 0x48, 0x58, 0x68 };
 
 static int hiface_control_set_rate(struct control_runtime *rt, int rate)
 {
@@ -52,7 +52,6 @@ static int hiface_control_set_rate(struct control_runtime *rt, int rate)
 	ret = usb_control_msg(device, usb_sndctrlpipe(device, 0),
 				0x43, 0xb0,
 				rate_value[rate], 0, NULL, 0, 100);
-
 	return 0;
 }
 
