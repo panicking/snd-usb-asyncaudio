@@ -44,8 +44,8 @@ enum { /* pcm streaming states */
 
 static inline void swap_word(u16 *dest, u16 *orig)
 {
-	*(dest + 2) = *orig;
-	*dest = *(orig + 2);
+	*(dest + 1) = *orig;
+	*dest = *(orig + 1);
 }
 
 static const struct snd_pcm_hardware pcm_hw = {
