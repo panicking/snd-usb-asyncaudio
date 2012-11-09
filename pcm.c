@@ -205,8 +205,8 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 			(unsigned int) sub->dma_off);
 
 		source = (u32 *) (alsa_rt->dma_area + sub->dma_off);
-		for (i = 0; i < PCM_MAX_PACKET_SIZE; i += 2)
-			swap_word((u16 *)dest + i, (u16 *)source + i);
+		for (i = 0; i < PCM_MAX_PACKET_SIZE; i += 4)
+			swap_word((u8 *)dest + i, (u8 *)source + i);
 	} else {
 		/* wrap around at end of ring buffer */
 		unsigned int len = alsa_rt->buffer_size * stride - sub->dma_off;
@@ -215,14 +215,14 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 		pr_debug("%s: (2) buffer_size %x dma_offset %x\n",
 			__func__, (unsigned int) alsa_rt->buffer_size * stride,
 			(unsigned int) sub->dma_off);
-		for (i = 0; i < len; i += 2)
-			swap_word((u16 *)dest + i, (u16 *)source + i);
+		for (i = 0; i < len; i += 4)
+			swap_word((u8 *)dest + i, (u8 *)source + i);
 
 		source = (u32 *) alsa_rt->dma_area;
 
-		for (i = 0; i < PCM_MAX_PACKET_SIZE - len; i += 2)
-			swap_word((u16 *)dest + len + i,
-				  (u16 *)source + i);
+		for (i = 0; i < PCM_MAX_PACKET_SIZE - len; i += 4)
+			swap_word((u8 *)dest + len + i,
+				  (u8 *)source + i);
 	}
 	sub->dma_off += PCM_MAX_PACKET_SIZE;
 	if (sub->dma_off >= (alsa_rt->buffer_size * stride))
