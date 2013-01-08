@@ -26,4 +26,3 @@ struct shiface_chip {
 	struct control_runtime *control;
 };
 #endif /* HIFACE_CHIP_H */
-

@@ -43,4 +43,3 @@ int __devinit hiface_control_init(struct shiface_chip *chip);
 void hiface_control_abort(struct shiface_chip *chip);
 void hiface_control_destroy(struct shiface_chip *chip);
 #endif /* HIFACE_CONTROL_H */
-
