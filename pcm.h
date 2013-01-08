@@ -38,7 +38,7 @@ struct pcm_substream {
 
 	bool active;
 	snd_pcm_uframes_t dma_off;	/* current position in alsa dma_area */
-        snd_pcm_uframes_t period_off;	/* current position in current period */
+	snd_pcm_uframes_t period_off;	/* current position in current period */
 };
 
 struct pcm_runtime {
