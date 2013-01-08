@@ -253,37 +253,37 @@ static struct usb_device_id device_table[] = {
 		}
 	},
 	{
-		USB_DEVICE(0X249C, 0x9006),
+		USB_DEVICE(0x249C, 0x9006),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
 			.driver_short_name = "CAD",
 		}
 	},
 	{
-		USB_DEVICE(0X249C, 0x932C),
+		USB_DEVICE(0x249C, 0x932C),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
 			.driver_short_name = "Eeaudio",
 		}
 	},
 	{
-		USB_DEVICE(0X249C, 0x9002),
+		USB_DEVICE(0x249C, 0x9002),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
 			.driver_short_name = "Metronome",
 		}
 	},
 	{
-		USB_DEVICE(0X249C, 0x9001),
+		USB_DEVICE(0x249C, 0x9001),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
 			.driver_short_name = "Pathos",
 		}
 	},
 	{
-		USB_DEVICE(0X249C, 0x931C),
+		USB_DEVICE(0x249C, 0x931C),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
 			.driver_short_name = "Rotel",
 		}
 	},
 	{
-		USB_DEVICE(0X249C, 0x9008),
+		USB_DEVICE(0x249C, 0x9008),
 		.driver_info = (unsigned long)&(const struct snd_vendor_quirk) {
 			.driver_short_name = "Audio Esclusive",
 		}
