@@ -48,8 +48,10 @@ static int hiface_control_set_rate(struct control_runtime *rt, int rate)
 	 * 43 b0 43 00 00 00 00 00
 	 * USBIO: Vendor 0xb0(wValue=0x004b, wIndex=0x0000)
 	 * 43 b0 4b 00 00 00 00 00
+	 * This control message doesn't have any ack from the
+	 * other side
 	 */
-	ret = usb_control_msg(device, usb_sndctrlpipe(device, 0),
+	(void)usb_control_msg(device, usb_sndctrlpipe(device, 0),
 				0x43, 0xb0,
 				rate_value[rate], 0, NULL, 0, 100);
 	return 0;
