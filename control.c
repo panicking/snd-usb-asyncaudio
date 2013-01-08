@@ -57,11 +57,6 @@ static int hiface_control_set_rate(struct control_runtime *rt, int rate)
 	return 0;
 }
 
-static int hiface_control_streaming_update(struct control_runtime *rt)
-{
-	return 0;
-}
-
 int __devinit hiface_control_init(struct shiface_chip *chip)
 {
 	struct control_runtime *rt = kzalloc(sizeof(struct control_runtime),
@@ -71,11 +66,8 @@ int __devinit hiface_control_init(struct shiface_chip *chip)
 		return -ENOMEM;
 
 	rt->chip = chip;
-	rt->update_streaming = hiface_control_streaming_update;
 	rt->set_rate = hiface_control_set_rate;
 	rt->stored_rate = -1;
-
-	hiface_control_streaming_update(rt);
 
 	chip->control = rt;
 	return 0;

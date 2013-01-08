@@ -84,12 +84,6 @@ static int hiface_pcm_set_rate(struct pcm_runtime *rt)
 	struct control_runtime *ctrl_rt = rt->chip->control;
 
 	ctrl_rt->usb_streaming = false;
-	ret = ctrl_rt->update_streaming(ctrl_rt);
-	if (ret < 0) {
-		snd_printk(KERN_ERR "Error stopping streaming while "
-				"setting samplerate %d.\n", rates[rt->rate]);
-		return ret;
-	}
 
 	ret = ctrl_rt->set_rate(ctrl_rt, rt->rate);
 	if (ret < 0) {
@@ -99,7 +93,6 @@ static int hiface_pcm_set_rate(struct pcm_runtime *rt)
 	}
 
 	ctrl_rt->usb_streaming = true;
-	ret = ctrl_rt->update_streaming(ctrl_rt);
 	if (ret < 0) {
 		snd_printk(KERN_ERR "Error starting streaming while " \
 				"setting samplerate %d.\n", rates[rt->rate]);
@@ -140,7 +133,6 @@ static void hiface_pcm_stream_stop(struct pcm_runtime *rt)
 		}
 
 		ctrl_rt->usb_streaming = false;
-		ctrl_rt->update_streaming(ctrl_rt);
 		rt->stream_state = STREAM_DISABLED;
 	}
 }

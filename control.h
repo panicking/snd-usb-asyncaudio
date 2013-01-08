@@ -31,7 +31,6 @@ enum {
 };
 
 struct control_runtime {
-	int (*update_streaming)(struct control_runtime *rt);
 	int (*set_rate)(struct control_runtime *rt, int rate);
 
 	struct shiface_chip *chip;
