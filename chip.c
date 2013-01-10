@@ -76,13 +76,13 @@ static void hiface_chip_destroy(struct hiface_chip *chip)
 static int __devinit hiface_chip_probe(struct usb_interface *intf,
 		const struct usb_device_id *usb_id)
 {
+	const struct snd_vendor_quirk *quirk = (struct snd_vendor_quirk *)usb_id->driver_info;
 	int ret;
 	int i;
 	struct hiface_chip *chip = NULL;
 	struct usb_device *device = interface_to_usbdev(intf);
 	int regidx = -1; /* index in module parameter array */
 	struct snd_card *card = NULL;
-	struct snd_vendor_quirk *driver_info = NULL;
 
 	pr_info("Probe m2-tech driver.\n");
 
@@ -120,10 +120,8 @@ static int __devinit hiface_chip_probe(struct usb_interface *intf,
 
 	strcpy(card->driver, "snd-async-audio");
 
-	if (usb_id->driver_info != 0) {
-		driver_info = (struct snd_vendor_quirk *)usb_id->driver_info;
-
-		strcpy(card->shortname, driver_info->driver_short_name);
+	if (quirk && quirk->driver_short_name) {
+		strcpy(card->shortname, quirk->driver_short_name);
 	} else {
 		strcpy(card->shortname, "M2Tech generic audio");
 	}
@@ -140,7 +138,7 @@ static int __devinit hiface_chip_probe(struct usb_interface *intf,
 	chip->card = card;
 
 	ret = hiface_pcm_init(chip, card->shortname,
-			      driver_info ? driver_info->extra_freq : 0);
+			      quirk ? quirk->extra_freq : 0);
 	if (ret < 0) {
 		hiface_chip_destroy(chip);
 		return ret;
