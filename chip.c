@@ -73,6 +73,44 @@ static void hiface_chip_destroy(struct hiface_chip *chip)
 	}
 }
 
+static int hiface_chip_create(struct usb_device *device, int idx,
+			      const struct snd_vendor_quirk *quirk,
+			      struct hiface_chip **rchip)
+{
+	struct snd_card *card = NULL;
+	struct hiface_chip *chip;
+	int ret;
+
+	*rchip = NULL;
+
+	/* if we are here, card can be registered in alsa. */
+	ret = snd_card_create(index[idx], id[idx], THIS_MODULE,
+			sizeof(struct hiface_chip), &card);
+	if (ret < 0) {
+		snd_printk(KERN_ERR "cannot create alsa card.\n");
+		return ret;
+	}
+
+	strcpy(card->driver, "snd-async-audio");
+
+	if (quirk && quirk->driver_short_name) {
+		strcpy(card->shortname, quirk->driver_short_name);
+	} else {
+		strcpy(card->shortname, "M2Tech generic audio");
+	}
+
+	sprintf(card->longname, "%s at %d:%d", card->shortname,
+			device->bus->busnum, device->devnum);
+
+	chip = card->private_data;
+	chip->dev = device;
+	chip->regidx = idx;
+	chip->card = card;
+
+	*rchip = chip;
+	return 0;
+}
+
 static int __devinit hiface_chip_probe(struct usb_interface *intf,
 		const struct usb_device_id *usb_id)
 {
@@ -82,7 +120,6 @@ static int __devinit hiface_chip_probe(struct usb_interface *intf,
 	struct hiface_chip *chip = NULL;
 	struct usb_device *device = interface_to_usbdev(intf);
 	int regidx = -1; /* index in module parameter array */
-	struct snd_card *card = NULL;
 
 	pr_info("Probe m2-tech driver.\n");
 
@@ -106,38 +143,22 @@ static int __devinit hiface_chip_probe(struct usb_interface *intf,
 	devices[regidx] = device;
 	mutex_unlock(&register_mutex);
 
-	/* if we are here, card can be registered in alsa. */
 	if (usb_set_interface(device, 0, 0) != 0) {
 		snd_printk(KERN_ERR "can't set first interface.\n");
 		return -EIO;
 	}
-	ret = snd_card_create(index[regidx], id[regidx], THIS_MODULE,
-			sizeof(struct hiface_chip), &card);
+
+	ret = hiface_chip_create(device, regidx, quirk, &chip);
 	if (ret < 0) {
-		snd_printk(KERN_ERR "cannot create alsa card.\n");
-		return ret;
+		snd_printk(KERN_ERR "cannot create card.\n");
+		return -ENODEV;
 	}
+	snd_card_set_dev(chip->card, &intf->dev);
 
-	strcpy(card->driver, "snd-async-audio");
-
-	if (quirk && quirk->driver_short_name) {
-		strcpy(card->shortname, quirk->driver_short_name);
-	} else {
-		strcpy(card->shortname, "M2Tech generic audio");
-	}
-
-	sprintf(card->longname, "%s at %d:%d", card->shortname,
-			device->bus->busnum, device->devnum);
-	snd_card_set_dev(card, &intf->dev);
-
-	chip = card->private_data;
 	chips[regidx] = chip;
-	chip->dev = device;
-	chip->regidx = regidx;
 	chip->intf_count = 1;
-	chip->card = card;
 
-	ret = hiface_pcm_init(chip, card->shortname,
+	ret = hiface_pcm_init(chip, chip->card->shortname,
 			      quirk ? quirk->extra_freq : 0);
 	if (ret < 0) {
 		hiface_chip_destroy(chip);
@@ -150,7 +171,7 @@ static int __devinit hiface_chip_probe(struct usb_interface *intf,
 		return ret;
 	}
 
-	ret = snd_card_register(card);
+	ret = snd_card_register(chip->card);
 	if (ret < 0) {
 		snd_printk(KERN_ERR "cannot register card\n");
 		hiface_chip_destroy(chip);
