@@ -15,7 +15,7 @@
 
 #include "common.h"
 
-struct shiface_chip {
+struct hiface_chip {
 	struct usb_device *dev;
 	struct snd_card *card;
 	int intf_count; /* number of registered interfaces */

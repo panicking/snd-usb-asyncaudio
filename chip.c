@@ -31,7 +31,7 @@ MODULE_SUPPORTED_DEVICE("{{HiFace, Evo}}");
 
 static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX; /* Index 0-max */
 static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR; /* Id for card */
-static struct shiface_chip *chips[SNDRV_CARDS] = SNDRV_DEFAULT_PTR;
+static struct hiface_chip *chips[SNDRV_CARDS] = SNDRV_DEFAULT_PTR;
 static struct usb_device *devices[SNDRV_CARDS] = SNDRV_DEFAULT_PTR;
 
 static DEFINE_MUTEX(register_mutex);
@@ -41,7 +41,7 @@ struct snd_vendor_quirk {
 	u8 extra_freq;
 };
 
-static void hiface_chip_abort(struct shiface_chip *chip)
+static void hiface_chip_abort(struct hiface_chip *chip)
 {
 	if (chip) {
 		/* Make sure that the userspace cannot create new request */
@@ -61,7 +61,7 @@ static void hiface_chip_abort(struct shiface_chip *chip)
 	}
 }
 
-static void hiface_chip_destroy(struct shiface_chip *chip)
+static void hiface_chip_destroy(struct hiface_chip *chip)
 {
 	if (chip) {
 		if (chip->pcm)
@@ -78,7 +78,7 @@ static int __devinit hiface_chip_probe(struct usb_interface *intf,
 {
 	int ret;
 	int i;
-	struct shiface_chip *chip = NULL;
+	struct hiface_chip *chip = NULL;
 	struct usb_device *device = interface_to_usbdev(intf);
 	int regidx = -1; /* index in module parameter array */
 	struct snd_card *card = NULL;
@@ -112,7 +112,7 @@ static int __devinit hiface_chip_probe(struct usb_interface *intf,
 		return -EIO;
 	}
 	ret = snd_card_create(index[regidx], id[regidx], THIS_MODULE,
-			sizeof(struct shiface_chip), &card);
+			sizeof(struct hiface_chip), &card);
 	if (ret < 0) {
 		snd_printk(KERN_ERR "cannot create alsa card.\n");
 		return ret;
@@ -164,7 +164,7 @@ static int __devinit hiface_chip_probe(struct usb_interface *intf,
 
 static void hiface_chip_disconnect(struct usb_interface *intf)
 {
-	struct shiface_chip *chip;
+	struct hiface_chip *chip;
 	struct snd_card *card;
 
 	chip = usb_get_intfdata(intf);

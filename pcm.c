@@ -454,7 +454,7 @@ static struct snd_pcm_ops pcm_ops = {
 };
 
 static int __devinit hiface_pcm_init_urb(struct pcm_urb *urb,
-		struct shiface_chip *chip, int ep,
+		struct hiface_chip *chip, int ep,
 		void (*handler)(struct urb *))
 {
 	urb->chip = chip;
@@ -468,7 +468,7 @@ static int __devinit hiface_pcm_init_urb(struct pcm_urb *urb,
 	return 0;
 }
 
-int __devinit hiface_pcm_init(struct shiface_chip *chip,
+int __devinit hiface_pcm_init(struct hiface_chip *chip,
 			      const char *pcm_stream_name,
 			      u8 extra_freq)
 {
@@ -519,7 +519,7 @@ int __devinit hiface_pcm_init(struct shiface_chip *chip,
 	return 0;
 }
 
-void hiface_pcm_abort(struct shiface_chip *chip)
+void hiface_pcm_abort(struct hiface_chip *chip)
 {
 	struct pcm_runtime *rt = chip->pcm;
 
@@ -536,7 +536,7 @@ void hiface_pcm_abort(struct shiface_chip *chip)
 	}
 }
 
-void hiface_pcm_destroy(struct shiface_chip *chip)
+void hiface_pcm_destroy(struct hiface_chip *chip)
 {
 	struct pcm_runtime *rt = chip->pcm;
 	int i;

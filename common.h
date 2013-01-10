@@ -22,7 +22,7 @@
 
 #define PREFIX "hiface: "
 
-struct shiface_chip;
+struct hiface_chip;
 struct pcm_runtime;
 struct control_runtime;
 #endif /* HIFACE_COMMON_H */

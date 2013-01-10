@@ -25,7 +25,7 @@
 #define PCM_MAX_PACKET_SIZE	4096
 
 struct pcm_urb {
-	struct shiface_chip *chip;
+	struct hiface_chip *chip;
 
 	struct urb instance;
 	struct usb_anchor submitted;
@@ -42,7 +42,7 @@ struct pcm_substream {
 };
 
 struct pcm_runtime {
-	struct shiface_chip *chip;
+	struct hiface_chip *chip;
 	struct snd_pcm *instance;
 
 	struct pcm_substream playback;
@@ -59,9 +59,9 @@ struct pcm_runtime {
 	bool stream_wait_cond;
 };
 
-int __devinit hiface_pcm_init(struct shiface_chip *chip,
+int __devinit hiface_pcm_init(struct hiface_chip *chip,
 			      const char *pcm_stream_name,
 			      u8 extra_freq);
-void hiface_pcm_abort(struct shiface_chip *chip);
-void hiface_pcm_destroy(struct shiface_chip *chip);
+void hiface_pcm_abort(struct hiface_chip *chip);
+void hiface_pcm_destroy(struct hiface_chip *chip);
 #endif /* HIFACE_PCM_H */

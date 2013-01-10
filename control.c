@@ -57,7 +57,7 @@ static int hiface_control_set_rate(struct control_runtime *rt, int rate)
 	return 0;
 }
 
-int __devinit hiface_control_init(struct shiface_chip *chip)
+int __devinit hiface_control_init(struct hiface_chip *chip)
 {
 	struct control_runtime *rt = kzalloc(sizeof(struct control_runtime),
 			GFP_KERNEL);
@@ -73,12 +73,12 @@ int __devinit hiface_control_init(struct shiface_chip *chip)
 	return 0;
 }
 
-void hiface_control_abort(struct shiface_chip *chip)
+void hiface_control_abort(struct hiface_chip *chip)
 {
 
 }
 
-void hiface_control_destroy(struct shiface_chip *chip)
+void hiface_control_destroy(struct hiface_chip *chip)
 {
 	kfree(chip->control);
 	chip->control = NULL;

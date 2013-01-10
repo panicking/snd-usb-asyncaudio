@@ -33,13 +33,13 @@ enum {
 struct control_runtime {
 	int (*set_rate)(struct control_runtime *rt, int rate);
 
-	struct shiface_chip *chip;
+	struct hiface_chip *chip;
 
 	bool usb_streaming;
 	int stored_rate;
 };
 
-int __devinit hiface_control_init(struct shiface_chip *chip);
-void hiface_control_abort(struct shiface_chip *chip);
-void hiface_control_destroy(struct shiface_chip *chip);
+int __devinit hiface_control_init(struct hiface_chip *chip);
+void hiface_control_abort(struct hiface_chip *chip);
+void hiface_control_destroy(struct hiface_chip *chip);
 #endif /* HIFACE_CONTROL_H */
