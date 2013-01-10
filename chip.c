@@ -190,7 +190,7 @@ static void hiface_chip_disconnect(struct usb_interface *intf)
 	if (chip) { /* if !chip, fw upload has been performed */
 		card = chip->card;
 		chip->intf_count--;
-		if (!chip->intf_count) {
+		if (chip->intf_count <= 0) {
 			mutex_lock(&register_mutex);
 			devices[chip->regidx] = NULL;
 			chips[chip->regidx] = NULL;
