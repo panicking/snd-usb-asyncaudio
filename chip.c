@@ -31,8 +31,8 @@ MODULE_SUPPORTED_DEVICE("{{HiFace, Evo}}");
 
 static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX; /* Index 0-max */
 static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR; /* Id for card */
+static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP; /* Enable this card */
 static struct hiface_chip *chips[SNDRV_CARDS] = SNDRV_DEFAULT_PTR;
-static struct usb_device *devices[SNDRV_CARDS] = SNDRV_DEFAULT_PTR;
 
 static DEFINE_MUTEX(register_mutex);
 
@@ -117,46 +117,49 @@ static int __devinit hiface_chip_probe(struct usb_interface *intf,
 	const struct snd_vendor_quirk *quirk = (struct snd_vendor_quirk *)usb_id->driver_info;
 	int ret;
 	int i;
-	struct hiface_chip *chip = NULL;
+	struct hiface_chip *chip;
 	struct usb_device *device = interface_to_usbdev(intf);
-	int regidx = -1; /* index in module parameter array */
 
 	pr_info("Probe m2-tech driver.\n");
-
-	/* look if we already serve this card and return if so */
-	mutex_lock(&register_mutex);
-	for (i = 0; i < SNDRV_CARDS; i++) {
-		if (devices[i] == device) {
-			if (chips[i])
-				chips[i]->intf_count++;
-			usb_set_intfdata(intf, chips[i]);
-			mutex_unlock(&register_mutex);
-			return 0;
-		} else if (regidx < 0)
-			regidx = i;
-	}
-	if (regidx < 0) {
-		mutex_unlock(&register_mutex);
-		snd_printk(KERN_ERR "too many cards registered.\n");
-		return -ENODEV;
-	}
-	devices[regidx] = device;
-	mutex_unlock(&register_mutex);
 
 	if (usb_set_interface(device, 0, 0) != 0) {
 		snd_printk(KERN_ERR "can't set first interface.\n");
 		return -EIO;
 	}
 
-	ret = hiface_chip_create(device, regidx, quirk, &chip);
-	if (ret < 0) {
-		snd_printk(KERN_ERR "cannot create card.\n");
-		return -ENODEV;
+	/* check whether the card is already registered */
+	chip = NULL;
+	mutex_lock(&register_mutex);
+	for (i = 0; i < SNDRV_CARDS; i++) {
+		if (chips[i] && chips[i]->dev == device) {
+			if (chips[i]->shutdown) {
+				snd_printk(KERN_ERR "HiFace device is in the shutdown state, cannot create a card instance\n");
+				goto err;
+			}
+			chip = chips[i];
+			break;
+		}
 	}
-	snd_card_set_dev(chip->card, &intf->dev);
+	if (!chip) {
+		/* it's a fresh one.
+		 * now look for an empty slot and create a new card instance
+		 */
+		for (i = 0; i < SNDRV_CARDS; i++)
+			if (enable[i] && !chips[i]) {
+				ret = hiface_chip_create(device, i, quirk,
+							 &chip);
+				if (ret < 0)
+					goto err;
 
-	chips[regidx] = chip;
-	chip->intf_count = 1;
+				snd_card_set_dev(chip->card, &intf->dev);
+				break;
+			}
+		if (!chip) {
+			snd_printk(KERN_ERR "no available HiFace audio device\n");
+			goto err;
+		}
+	}
+	mutex_unlock(&register_mutex);
 
 	ret = hiface_pcm_init(chip, chip->card->shortname,
 			      quirk ? quirk->extra_freq : 0);
@@ -177,8 +180,16 @@ static int __devinit hiface_chip_probe(struct usb_interface *intf,
 		hiface_chip_destroy(chip);
 		return ret;
 	}
+
+	chips[chip->regidx] = chip;
+	chip->intf_count++;
+
 	usb_set_intfdata(intf, chip);
 	return 0;
+
+err:
+	mutex_unlock(&register_mutex);
+	return -ENODEV;
 }
 
 static void hiface_chip_disconnect(struct usb_interface *intf)
@@ -192,7 +203,6 @@ static void hiface_chip_disconnect(struct usb_interface *intf)
 		chip->intf_count--;
 		if (chip->intf_count <= 0) {
 			mutex_lock(&register_mutex);
-			devices[chip->regidx] = NULL;
 			chips[chip->regidx] = NULL;
 			mutex_unlock(&register_mutex);
 
