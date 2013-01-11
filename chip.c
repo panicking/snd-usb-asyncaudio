@@ -132,7 +132,8 @@ static int __devinit hiface_chip_probe(struct usb_interface *intf,
 
 	pr_info("Probe m2-tech driver.\n");
 
-	if (usb_set_interface(device, 0, 0) != 0) {
+	ret = usb_set_interface(device, 0, 0);
+	if (ret != 0) {
 		snd_printk(KERN_ERR "can't set first interface.\n");
 		return -EIO;
 	}
