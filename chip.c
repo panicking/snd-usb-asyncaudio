@@ -61,9 +61,6 @@ static void hiface_chip_abort(struct hiface_chip *chip)
 		if (chip->pcm)
 			hiface_pcm_abort(chip);
 
-		if (chip->control)
-			hiface_control_abort(chip);
-
 		if (chip->card) {
 			snd_card_free_when_closed(chip->card);
 			chip->card = NULL;

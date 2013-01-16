@@ -40,6 +40,5 @@ struct control_runtime {
 };
 
 int __devinit hiface_control_init(struct hiface_chip *chip);
-void hiface_control_abort(struct hiface_chip *chip);
 void hiface_control_destroy(struct hiface_chip *chip);
 #endif /* HIFACE_CONTROL_H */

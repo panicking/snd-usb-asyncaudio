@@ -73,11 +73,6 @@ int __devinit hiface_control_init(struct hiface_chip *chip)
 	return 0;
 }
 
-void hiface_control_abort(struct hiface_chip *chip)
-{
-
-}
-
 void hiface_control_destroy(struct hiface_chip *chip)
 {
 	kfree(chip->control);
