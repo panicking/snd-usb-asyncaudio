@@ -18,18 +18,6 @@
 
 #include "common.h"
 
-enum {
-	CONTROL_RATE_44KHZ,
-	CONTROL_RATE_48KHZ,
-	CONTROL_RATE_88KHZ,
-	CONTROL_RATE_96KHZ,
-	CONTROL_RATE_176KHZ,
-	CONTROL_RATE_192KHZ,
-	CONTROL_RATE_352KHZ,
-	CONTROL_RATE_384KHZ,
-	CONTROL_N_RATES
-};
-
 struct control_runtime {
 	int (*set_rate)(struct control_runtime *rt, int rate);
 

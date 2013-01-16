@@ -22,6 +22,18 @@
 #include "control.h"
 #include "chip.h"
 
+enum {
+	CONTROL_RATE_44KHZ,
+	CONTROL_RATE_48KHZ,
+	CONTROL_RATE_88KHZ,
+	CONTROL_RATE_96KHZ,
+	CONTROL_RATE_176KHZ,
+	CONTROL_RATE_192KHZ,
+	CONTROL_RATE_352KHZ,
+	CONTROL_RATE_384KHZ,
+	CONTROL_N_RATES
+};
+
 static __u16 rate_value[] = { 0x43, 0x4b, 0x42, 0x4a, 0x40, 0x48, 0x58, 0x68 };
 
 static int hiface_control_set_rate(struct control_runtime *rt, int rate)
