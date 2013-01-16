@@ -63,8 +63,9 @@ static int hiface_control_set_rate(struct control_runtime *rt, int rate)
 	 * This control message doesn't have any ack from the
 	 * other side
 	 */
-	(void)usb_control_msg(device, usb_sndctrlpipe(device, 0),
-				0x43, 0xb0,
+	ret = usb_control_msg(device, usb_sndctrlpipe(device, 0),
+				USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
+				0xb0,
 				rate_value[rate], 0, NULL, 0, 100);
 	return 0;
 }
