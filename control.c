@@ -71,9 +71,9 @@ static int hiface_control_set_rate(struct control_runtime *rt, int rate)
 
 int __devinit hiface_control_init(struct hiface_chip *chip)
 {
-	struct control_runtime *rt = kzalloc(sizeof(struct control_runtime),
-			GFP_KERNEL);
+	struct control_runtime *rt;
 
+	rt = kzalloc(sizeof(struct control_runtime), GFP_KERNEL);
 	if (!rt)
 		return -ENOMEM;
 
