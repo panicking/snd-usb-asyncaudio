@@ -23,7 +23,6 @@ struct control_runtime {
 
 	struct hiface_chip *chip;
 
-	bool usb_streaming;
 	int stored_rate;
 };
 
