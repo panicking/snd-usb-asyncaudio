@@ -210,7 +210,7 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 	unsigned int stride;
 	int i;
 
-	stride = alsa_rt->frame_bits >> 3;
+	stride = alsa_rt->frame_bits / 8;
 
 	if (alsa_rt->format == SNDRV_PCM_FORMAT_S32_LE)
 		dest = (u8 *)urb->buffer;
@@ -467,7 +467,7 @@ static snd_pcm_uframes_t hiface_pcm_pointer(
 	spin_lock_irqsave(&sub->lock, flags);
 	ret = sub->dma_off;
 	spin_unlock_irqrestore(&sub->lock, flags);
-	return ret / (alsa_sub->runtime->frame_bits >> 3);
+	return ret / (alsa_sub->runtime->frame_bits / 8);
 }
 
 static struct snd_pcm_ops pcm_ops = {
