@@ -15,10 +15,49 @@
  * (at your option) any later version.
  */
 
+#include <sound/pcm.h>
+
 #include "pcm.h"
 #include "chip.h"
 #include "control.h"
-#include <linux/usb.h>
+
+#define PCM_N_URBS		8
+#define PCM_MAX_PACKET_SIZE	4096
+
+struct pcm_urb {
+	struct hiface_chip *chip;
+
+	struct urb instance;
+	struct usb_anchor submitted;
+	void *buffer;
+};
+
+struct pcm_substream {
+	spinlock_t lock;
+	struct snd_pcm_substream *instance;
+
+	bool active;
+	snd_pcm_uframes_t dma_off;	/* current position in alsa dma_area */
+	snd_pcm_uframes_t period_off;	/* current position in current period */
+};
+
+struct pcm_runtime {
+	struct hiface_chip *chip;
+	struct snd_pcm *instance;
+
+	struct pcm_substream playback;
+	bool panic; /* if set driver won't do anymore pcm on device */
+
+	struct pcm_urb out_urbs[PCM_N_URBS];
+
+	struct mutex stream_mutex;
+	u8 stream_state; /* one of STREAM_XXX (pcm.c) */
+	u8 rate; /* one of PCM_RATE_XXX */
+	u8 extra_freq;
+	u8 dummy;
+	wait_queue_head_t stream_wait_queue;
+	bool stream_wait_cond;
+};
 
 enum {
 	OUT_N_CHANNELS = 2
