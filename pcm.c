@@ -221,9 +221,9 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 
 	if (sub->dma_off + PCM_MAX_PACKET_SIZE <=
 		(alsa_rt->buffer_size * stride)) {
-		pr_debug("%s: (1) buffer_size %x dma_offset %x\n",
-			__func__, (unsigned int) alsa_rt->buffer_size * stride,
-			(unsigned int) sub->dma_off);
+		pr_debug("%s: (1) buffer_size %x dma_offset %x\n", __func__,
+			 (unsigned int) alsa_rt->buffer_size * stride,
+			 (unsigned int) sub->dma_off);
 
 		source = (u8 *)(alsa_rt->dma_area + sub->dma_off);
 		for (i = 0; i < PCM_MAX_PACKET_SIZE; i += 4)
@@ -233,9 +233,10 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 		unsigned int len = alsa_rt->buffer_size * stride - sub->dma_off;
 		source = (u8 *)(alsa_rt->dma_area + sub->dma_off);
 
-		pr_debug("%s: (2) buffer_size %x dma_offset %x\n",
-			__func__, (unsigned int) alsa_rt->buffer_size * stride,
-			(unsigned int) sub->dma_off);
+		pr_debug("%s: (2) buffer_size %x dma_offset %x\n", __func__,
+			 (unsigned int) alsa_rt->buffer_size * stride,
+			 (unsigned int) sub->dma_off);
+
 		for (i = 0; i < len; i += 4)
 			swap_word(dest + i, source + i);
 
