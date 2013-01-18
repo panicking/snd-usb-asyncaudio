@@ -206,18 +206,19 @@ static void hiface_chip_disconnect(struct usb_interface *intf)
 	struct snd_card *card;
 
 	chip = usb_get_intfdata(intf);
-	if (chip) { /* if !chip, fw upload has been performed */
-		card = chip->card;
-		chip->intf_count--;
-		if (chip->intf_count <= 0) {
-			mutex_lock(&register_mutex);
-			chips[chip->regidx] = NULL;
-			mutex_unlock(&register_mutex);
+	if (!chip)
+		return;
 
-			chip->shutdown = true;
-			hiface_chip_abort(chip);
-			hiface_chip_destroy(chip);
-		}
+	card = chip->card;
+	chip->intf_count--;
+	if (chip->intf_count <= 0) {
+		mutex_lock(&register_mutex);
+		chips[chip->regidx] = NULL;
+		mutex_unlock(&register_mutex);
+
+		chip->shutdown = true;
+		hiface_chip_abort(chip);
+		hiface_chip_destroy(chip);
 	}
 }
 
