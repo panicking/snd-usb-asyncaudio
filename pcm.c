@@ -507,9 +507,9 @@ int __devinit hiface_pcm_init(struct hiface_chip *chip,
 	int i;
 	int ret;
 	struct snd_pcm *pcm;
-	struct pcm_runtime *rt =
-			kzalloc(sizeof(struct pcm_runtime), GFP_KERNEL);
+	struct pcm_runtime *rt;
 
+	rt = kzalloc(sizeof(struct pcm_runtime), GFP_KERNEL);
 	if (!rt)
 		return -ENOMEM;
 
