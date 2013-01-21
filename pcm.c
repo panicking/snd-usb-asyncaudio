@@ -482,9 +482,10 @@ static struct snd_pcm_ops pcm_ops = {
 	.pointer = hiface_pcm_pointer,
 };
 
-static int __devinit hiface_pcm_init_urb(struct pcm_urb *urb,
-		struct hiface_chip *chip, int ep,
-		void (*handler)(struct urb *))
+static int hiface_pcm_init_urb(struct pcm_urb *urb,
+			       struct hiface_chip *chip,
+			       int ep,
+			       void (*handler)(struct urb *))
 {
 	urb->chip = chip;
 	usb_init_urb(&urb->instance);
@@ -501,9 +502,9 @@ static int __devinit hiface_pcm_init_urb(struct pcm_urb *urb,
 	return 0;
 }
 
-int __devinit hiface_pcm_init(struct hiface_chip *chip,
-			      const char *pcm_stream_name,
-			      u8 extra_freq)
+int hiface_pcm_init(struct hiface_chip *chip,
+		    const char *pcm_stream_name,
+		    u8 extra_freq)
 {
 	int i;
 	int ret;

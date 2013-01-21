@@ -18,9 +18,9 @@
 
 #include "common.h"
 
-int __devinit hiface_pcm_init(struct hiface_chip *chip,
-			      const char *pcm_stream_name,
-			      u8 extra_freq);
+int hiface_pcm_init(struct hiface_chip *chip,
+		    const char *pcm_stream_name,
+		    u8 extra_freq);
 void hiface_pcm_abort(struct hiface_chip *chip);
 void hiface_pcm_destroy(struct hiface_chip *chip);
 #endif /* HIFACE_PCM_H */

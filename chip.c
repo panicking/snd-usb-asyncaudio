@@ -118,8 +118,8 @@ static int hiface_chip_create(struct usb_device *device, int idx,
 	return 0;
 }
 
-static int __devinit hiface_chip_probe(struct usb_interface *intf,
-		const struct usb_device_id *usb_id)
+static int hiface_chip_probe(struct usb_interface *intf,
+			     const struct usb_device_id *usb_id)
 {
 	const struct snd_vendor_quirk *quirk = (struct snd_vendor_quirk *)usb_id->driver_info;
 	int ret;

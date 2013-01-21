@@ -70,7 +70,7 @@ static int hiface_control_set_rate(struct control_runtime *rt, int rate)
 	return 0;
 }
 
-int __devinit hiface_control_init(struct hiface_chip *chip)
+int hiface_control_init(struct hiface_chip *chip)
 {
 	struct control_runtime *rt;
 
