@@ -59,10 +59,6 @@ struct pcm_runtime {
 	bool stream_wait_cond;
 };
 
-enum {
-	OUT_N_CHANNELS = 2
-};
-
 static const int rates[] = { 44100, 48000, 88200, 96000, 176400, 192000,
 			     352800, 384000 };
 static const int rates_alsaid[] = {
@@ -313,7 +309,6 @@ static int hiface_pcm_open(struct snd_pcm_substream *alsa_sub)
 	if (alsa_sub->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		if (rt->rate < ARRAY_SIZE(rates))
 			alsa_rt->hw.rates = rates_alsaid[rt->rate];
-		alsa_rt->hw.channels_max = OUT_N_CHANNELS;
 		sub = &rt->playback;
 	}
 
