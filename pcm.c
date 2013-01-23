@@ -102,9 +102,9 @@ static const struct snd_pcm_hardware pcm_hw = {
 		SNDRV_PCM_RATE_KNOT,
 
 	.rate_min = 44100,
-	.rate_max = 192000,
+	.rate_max = 192000, /* changes in hiface_pcm_open to support extra rates */
 	.channels_min = 2,
-	.channels_max = 2, /* set in pcm_open */
+	.channels_max = 2,
 	.buffer_bytes_max = MAX_BUFSIZE,
 	.period_bytes_min = PCM_MAX_PACKET_SIZE,
 	.period_bytes_max = MAX_BUFSIZE,
