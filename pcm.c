@@ -111,11 +111,20 @@ static const struct snd_pcm_hardware pcm_hw = {
 	.periods_max = 1024
 };
 
-static int hiface_pcm_set_rate(struct pcm_runtime *rt)
+static int hiface_pcm_set_rate(struct pcm_runtime *rt, int rate)
 {
 	u8 rate_value[] = { 0x43, 0x4b, 0x42, 0x4a, 0x40, 0x48, 0x58, 0x68 };
 	int ret;
 	struct usb_device *device = rt->chip->dev;
+
+	for (rt->rate = 0; rt->rate < ARRAY_SIZE(rates); rt->rate++)
+		if (rate == rates[rt->rate])
+			break;
+
+	if (rt->rate == ARRAY_SIZE(rates)) {
+		pr_err("Unsupported rate %d\n", rate);
+		return -EINVAL;
+	}
 
 	/* TODO: handle stored rate?
 	if (rate == rt->stored_rate)
@@ -408,17 +417,8 @@ static int hiface_pcm_prepare(struct snd_pcm_substream *alsa_sub)
 	sub->period_off = 0;
 
 	if (rt->stream_state == STREAM_DISABLED) {
-		for (rt->rate = 0; rt->rate < ARRAY_SIZE(rates); rt->rate++)
-			if (alsa_rt->rate == rates[rt->rate])
-				break;
-		if (rt->rate == ARRAY_SIZE(rates)) {
-			mutex_unlock(&rt->stream_mutex);
-			pr_err("Invalid rate %d in prepare\n",
-					alsa_rt->rate);
-			return -EINVAL;
-		}
 
-		ret = hiface_pcm_set_rate(rt);
+		ret = hiface_pcm_set_rate(rt, alsa_rt->rate);
 		if (ret) {
 			mutex_unlock(&rt->stream_mutex);
 			return ret;
