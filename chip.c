@@ -54,10 +54,6 @@ struct snd_vendor_quirk {
 static void hiface_chip_abort(struct hiface_chip *chip)
 {
 	if (chip) {
-		/* Make sure that the userspace cannot create new request */
-		if (chip->card)
-			snd_card_disconnect(chip->card);
-
 		if (chip->pcm)
 			hiface_pcm_abort(chip);
 
@@ -214,6 +210,9 @@ static void hiface_chip_disconnect(struct usb_interface *intf)
 	card = chip->card;
 	chip->intf_count--;
 	if (chip->intf_count <= 0) {
+		/* Make sure that the userspace cannot create new request */
+		snd_card_disconnect(chip->card);
+
 		mutex_lock(&register_mutex);
 		chips[chip->regidx] = NULL;
 		mutex_unlock(&register_mutex);
