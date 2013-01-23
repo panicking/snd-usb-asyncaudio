@@ -447,8 +447,7 @@ static int hiface_pcm_trigger(struct snd_pcm_substream *alsa_sub, int cmd)
 	}
 }
 
-static snd_pcm_uframes_t hiface_pcm_pointer(
-		struct snd_pcm_substream *alsa_sub)
+static snd_pcm_uframes_t hiface_pcm_pointer(struct snd_pcm_substream *alsa_sub)
 {
 	struct pcm_substream *sub = hiface_pcm_get_substream(alsa_sub);
 	struct pcm_runtime *rt = snd_pcm_substream_chip(alsa_sub);
