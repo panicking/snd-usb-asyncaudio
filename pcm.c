@@ -60,7 +60,6 @@ struct pcm_runtime {
 
 	struct mutex stream_mutex;
 	u8 stream_state; /* one of STREAM_XXX */
-	u8 rate; /* one of PCM_RATE_XXX */
 	u8 extra_freq;
 	wait_queue_head_t stream_wait_queue;
 	bool stream_wait_cond;
@@ -107,17 +106,18 @@ static int hiface_pcm_set_rate(struct pcm_runtime *rt, unsigned int rate)
 {
 	u8 rate_value[] = { 0x43, 0x4b, 0x42, 0x4a, 0x40, 0x48, 0x58, 0x68 };
 	int ret;
+	int i;
 	struct usb_device *device = rt->chip->dev;
 
 	/* We are already sure that the rate is supported here thanks to the
 	 * contraints set in hiface_pcm_open(), but we have to retrieve the
 	 * index to access rate_value.
 	 */
-	for (rt->rate = 0; rt->rate < ARRAY_SIZE(rates); rt->rate++)
-		if (rate == rates[rt->rate])
+	for (i = 0; i < ARRAY_SIZE(rates); i++)
+		if (rate == rates[i])
 			break;
 
-	if (unlikely(rt->rate == ARRAY_SIZE(rates))) {
+	if (unlikely(i == ARRAY_SIZE(rates))) {
 		pr_err("Unsupported rate %d\n", rate);
 		return -EINVAL;
 	}
@@ -133,10 +133,10 @@ static int hiface_pcm_set_rate(struct pcm_runtime *rt, unsigned int rate)
 	ret = usb_control_msg(device, usb_sndctrlpipe(device, 0),
 				0xb0,
 				USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
-				rate_value[rt->rate], 0, NULL, 0, 100);
+				rate_value[i], 0, NULL, 0, 100);
 	if (ret < 0) {
 		snd_printk(KERN_ERR "Error setting samplerate %d.\n",
-				rates[rt->rate]);
+				rates[i]);
 		return ret;
 	}
 
@@ -380,7 +380,6 @@ static int hiface_pcm_close(struct snd_pcm_substream *alsa_sub)
 		/* all substreams closed? if so, stop streaming */
 		if (!rt->playback.instance) {
 			hiface_pcm_stream_stop(rt);
-			rt->rate = ARRAY_SIZE(rates);
 		}
 	}
 	mutex_unlock(&rt->stream_mutex);
@@ -569,7 +568,6 @@ int hiface_pcm_init(struct hiface_chip *chip, u8 extra_freq)
 
 	rt->chip = chip;
 	rt->stream_state = STREAM_DISABLED;
-	rt->rate = ARRAY_SIZE(rates);
 	if (extra_freq)
 		rt->extra_freq = 1;
 
