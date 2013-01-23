@@ -205,6 +205,8 @@ static void hiface_chip_disconnect(struct usb_interface *intf)
 	struct hiface_chip *chip;
 	struct snd_card *card;
 
+	pr_debug("%s: called.\n", __func__);
+
 	chip = usb_get_intfdata(intf);
 	if (!chip)
 		return;
