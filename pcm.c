@@ -54,7 +54,6 @@ struct pcm_runtime {
 	u8 stream_state; /* one of STREAM_XXX (pcm.c) */
 	u8 rate; /* one of PCM_RATE_XXX */
 	u8 extra_freq;
-	u8 dummy;
 	wait_queue_head_t stream_wait_queue;
 	bool stream_wait_cond;
 };
