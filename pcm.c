@@ -256,7 +256,7 @@ static void hiface_pcm_out_urb_handler(struct urb *usb_urb)
 	struct pcm_substream *sub;
 	unsigned long flags;
 
-	pr_debug("%s: func\n", __func__);
+	pr_debug("%s: called.\n", __func__);
 
 	if (usb_urb->status || rt->panic || rt->stream_state == STREAM_STOPPING)
 		return;
@@ -300,7 +300,7 @@ static int hiface_pcm_open(struct snd_pcm_substream *alsa_sub)
 	if (rt->panic)
 		return -EPIPE;
 
-	pr_debug("%s: func\n", __func__);
+	pr_debug("%s: called.\n", __func__);
 
 	mutex_lock(&rt->stream_mutex);
 	alsa_rt->hw = pcm_hw;
@@ -335,7 +335,7 @@ static int hiface_pcm_close(struct snd_pcm_substream *alsa_sub)
 	if (rt->panic)
 		return 0;
 
-	pr_debug("%s: func\n", __func__);
+	pr_debug("%s: called.\n", __func__);
 
 	mutex_lock(&rt->stream_mutex);
 	if (sub) {
@@ -358,14 +358,14 @@ static int hiface_pcm_close(struct snd_pcm_substream *alsa_sub)
 static int hiface_pcm_hw_params(struct snd_pcm_substream *alsa_sub,
 		struct snd_pcm_hw_params *hw_params)
 {
-	pr_debug("%s: func\n", __func__);
+	pr_debug("%s: called.\n", __func__);
 	return snd_pcm_lib_malloc_pages(alsa_sub,
 			params_buffer_bytes(hw_params));
 }
 
 static int hiface_pcm_hw_free(struct snd_pcm_substream *alsa_sub)
 {
-	pr_debug("%s: func\n", __func__);
+	pr_debug("%s: called.\n", __func__);
 	return snd_pcm_lib_free_pages(alsa_sub);
 }
 
@@ -376,7 +376,7 @@ static int hiface_pcm_prepare(struct snd_pcm_substream *alsa_sub)
 	struct snd_pcm_runtime *alsa_rt = alsa_sub->runtime;
 	int ret;
 
-	pr_debug("%s: func\n", __func__);
+	pr_debug("%s: called.\n", __func__);
 
 	if (rt->panic)
 		return -EPIPE;
@@ -420,7 +420,7 @@ static int hiface_pcm_trigger(struct snd_pcm_substream *alsa_sub, int cmd)
 	struct pcm_runtime *rt = snd_pcm_substream_chip(alsa_sub);
 	unsigned long flags;
 
-	pr_debug("%s: func\n", __func__);
+	pr_debug("%s: called.\n", __func__);
 
 	if (rt->panic)
 		return -EPIPE;
