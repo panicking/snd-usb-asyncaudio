@@ -19,7 +19,7 @@ struct hiface_chip {
 	struct usb_device *dev;
 	struct snd_card *card;
 	int intf_count; /* number of registered interfaces */
-	int regidx; /* index in module parameter arrays */
+	int index; /* index in module parameter arrays */
 	bool shutdown;
 
 	struct pcm_runtime *pcm;

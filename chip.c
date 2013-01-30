@@ -123,7 +123,7 @@ static int hiface_chip_create(struct usb_device *device, int idx,
 	}
 
 	chip->dev = device;
-	chip->regidx = idx;
+	chip->index = idx;
 	chip->card = card;
 
 	ret = snd_device_new(card, SNDRV_DEV_LOWLEVEL, chip, &ops);
@@ -208,7 +208,7 @@ static int hiface_chip_probe(struct usb_interface *intf,
 		return ret;
 	}
 
-	chips[chip->regidx] = chip;
+	chips[chip->index] = chip;
 	chip->intf_count++;
 
 	usb_set_intfdata(intf, chip);
@@ -237,7 +237,7 @@ static void hiface_chip_disconnect(struct usb_interface *intf)
 		snd_card_disconnect(chip->card);
 
 		mutex_lock(&register_mutex);
-		chips[chip->regidx] = NULL;
+		chips[chip->index] = NULL;
 		mutex_unlock(&register_mutex);
 
 		chip->shutdown = true;
