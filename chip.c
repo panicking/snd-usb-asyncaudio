@@ -73,7 +73,16 @@ static void hiface_chip_destroy(struct hiface_chip *chip)
 			hiface_control_destroy(chip);
 		if (chip->card)
 			snd_card_free(chip->card);
+
+		kfree(chip);
 	}
+}
+
+static int hiface_dev_free(struct snd_device *device)
+{
+	struct hiface_chip *chip = device->device_data;
+	hiface_chip_destroy(chip);
+	return 0;
 }
 
 static int hiface_chip_create(struct usb_device *device, int idx,
@@ -83,12 +92,14 @@ static int hiface_chip_create(struct usb_device *device, int idx,
 	struct snd_card *card = NULL;
 	struct hiface_chip *chip;
 	int ret;
+	static struct snd_device_ops ops = {
+		.dev_free =	hiface_dev_free,
+	};
 
 	*rchip = NULL;
 
 	/* if we are here, card can be registered in alsa. */
-	ret = snd_card_create(index[idx], id[idx], THIS_MODULE,
-			sizeof(struct hiface_chip), &card);
+	ret = snd_card_create(index[idx], id[idx], THIS_MODULE, 0, &card);
 	if (ret < 0) {
 		snd_printk(KERN_ERR "cannot create alsa card.\n");
 		return ret;
@@ -105,10 +116,22 @@ static int hiface_chip_create(struct usb_device *device, int idx,
 	sprintf(card->longname, "%s at %d:%d", card->shortname,
 			device->bus->busnum, device->devnum);
 
-	chip = card->private_data;
+	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
+	if (!chip) {
+		snd_card_free(card);
+		return -ENOMEM;
+	}
+
 	chip->dev = device;
 	chip->regidx = idx;
 	chip->card = card;
+
+	ret = snd_device_new(card, SNDRV_DEV_LOWLEVEL, chip, &ops);
+	if (ret < 0) {
+			kfree(chip);
+			snd_card_free(card);
+			return ret;
+	}
 
 	*rchip = chip;
 	return 0;
@@ -219,7 +242,6 @@ static void hiface_chip_disconnect(struct usb_interface *intf)
 
 		chip->shutdown = true;
 		hiface_chip_abort(chip);
-		hiface_chip_destroy(chip);
 	}
 }
 
