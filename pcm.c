@@ -123,11 +123,15 @@ static int hiface_pcm_set_rate(struct pcm_runtime *rt, int rate)
 	int ret;
 	struct usb_device *device = rt->chip->dev;
 
+	/* We are already sure that the rate is supported here thanks to the
+	 * contraints set in hiface_pcm_open(), but we have to retrieve the
+	 * index to access rate_value.
+	 */
 	for (rt->rate = 0; rt->rate < ARRAY_SIZE(rates); rt->rate++)
 		if (rate == rates[rt->rate])
 			break;
 
-	if (rt->rate == ARRAY_SIZE(rates)) {
+	if (unlikely(rt->rate == ARRAY_SIZE(rates))) {
 		pr_err("Unsupported rate %d\n", rate);
 		return -EINVAL;
 	}
