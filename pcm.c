@@ -457,7 +457,6 @@ static snd_pcm_uframes_t hiface_pcm_pointer(struct snd_pcm_substream *alsa_sub)
 	if (rt->panic || !sub)
 		return SNDRV_PCM_STATE_XRUN;
 
-
 	spin_lock_irqsave(&sub->lock, flags);
 	ret = sub->dma_off;
 	spin_unlock_irqrestore(&sub->lock, flags);
