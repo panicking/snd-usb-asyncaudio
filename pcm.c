@@ -210,7 +210,7 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 	if (alsa_rt->format == SNDRV_PCM_FORMAT_S32_LE)
 		dest = (u8 *)urb->buffer;
 	else {
-		pr_err("Unknown sample format\n");
+		pr_err("Unsupported sample format\n");
 		return -EINVAL;
 	}
 
