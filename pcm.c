@@ -235,6 +235,9 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 	u8 *source;
 	unsigned int pcm_buffer_size;
 
+	/* XXX Can an invalid format make it to here?
+	 * Isn't ALSA checking pcm_hw.formats ?
+	 */
 	if (alsa_rt->format != SNDRV_PCM_FORMAT_S32_LE) {
 		pr_err("Unsupported sample format\n");
 		return -EINVAL;
