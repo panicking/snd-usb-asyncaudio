@@ -169,7 +169,7 @@ static int hiface_pcm_stream_start(struct pcm_runtime *rt)
 		/* submit our out urbs zero init */
 		rt->stream_state = STREAM_STARTING;
 		for (i = 0; i < PCM_N_URBS; i++) {
-			memset(&rt->out_urbs[i].buffer, PCM_MAX_PACKET_SIZE, 0);
+			memset(rt->out_urbs[i].buffer, PCM_MAX_PACKET_SIZE, 0);
 			usb_anchor_urb(&rt->out_urbs[i].instance,
 				       &rt->out_urbs[i].submitted);
 			ret = usb_submit_urb(&rt->out_urbs[i].instance,
