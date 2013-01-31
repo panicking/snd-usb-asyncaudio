@@ -234,7 +234,7 @@ static void hiface_chip_disconnect(struct usb_interface *intf)
 	chip->intf_count--;
 	if (chip->intf_count <= 0) {
 		/* Make sure that the userspace cannot create new request */
-		snd_card_disconnect(chip->card);
+		snd_card_disconnect(card);
 
 		mutex_lock(&register_mutex);
 		chips[chip->index] = NULL;
