@@ -63,20 +63,10 @@ static void hiface_chip_abort(struct hiface_chip *chip)
 	}
 }
 
-static void hiface_chip_destroy(struct hiface_chip *chip)
-{
-	if (chip) {
-		if (chip->card)
-			snd_card_free(chip->card);
-
-		kfree(chip);
-	}
-}
-
 static int hiface_dev_free(struct snd_device *device)
 {
 	struct hiface_chip *chip = device->device_data;
-	hiface_chip_destroy(chip);
+	kfree(chip);
 	return 0;
 }
 
@@ -156,6 +146,7 @@ static int hiface_chip_probe(struct usb_interface *intf,
 		if (chips[i] && chips[i]->dev == device) {
 			if (chips[i]->shutdown) {
 				snd_printk(KERN_ERR "HiFace device is in the shutdown state, cannot create a card instance\n");
+				ret = -ENODEV;
 				goto err;
 			}
 			chip = chips[i];
@@ -178,34 +169,35 @@ static int hiface_chip_probe(struct usb_interface *intf,
 			}
 		if (!chip) {
 			snd_printk(KERN_ERR "no available HiFace audio device\n");
+			ret = -ENODEV;
 			goto err;
 		}
 	}
-	mutex_unlock(&register_mutex);
 
 	ret = hiface_pcm_init(chip, chip->card->shortname,
 			      quirk ? quirk->extra_freq : 0);
-	if (ret < 0) {
-		hiface_chip_destroy(chip);
-		return ret;
-	}
+	if (ret < 0)
+		goto err_chip_destroy;
 
 	ret = snd_card_register(chip->card);
 	if (ret < 0) {
 		snd_printk(KERN_ERR "cannot register card\n");
-		hiface_chip_destroy(chip);
-		return ret;
+		goto err_chip_destroy;
 	}
 
 	chips[chip->index] = chip;
 	chip->intf_count++;
 
+	mutex_unlock(&register_mutex);
+
 	usb_set_intfdata(intf, chip);
 	return 0;
 
+err_chip_destroy:
+	snd_card_free(chip->card);
 err:
 	mutex_unlock(&register_mutex);
-	return -ENODEV;
+	return ret;
 }
 
 static void hiface_chip_disconnect(struct usb_interface *intf)
