@@ -67,8 +67,6 @@ static void hiface_chip_abort(struct hiface_chip *chip)
 static void hiface_chip_destroy(struct hiface_chip *chip)
 {
 	if (chip) {
-		if (chip->pcm)
-			hiface_pcm_destroy(chip);
 		if (chip->control)
 			hiface_control_destroy(chip);
 		if (chip->card)

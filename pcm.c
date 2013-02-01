@@ -523,6 +523,16 @@ void hiface_pcm_destroy(struct hiface_chip *chip)
 	chip->pcm = NULL;
 }
 
+static void hiface_pcm_free(struct snd_pcm *pcm)
+{
+	struct pcm_runtime *rt = pcm->private_data;
+
+	pr_debug("%s: called.\n", __func__);
+
+	if (rt)
+		hiface_pcm_destroy(rt->chip);
+}
+
 int hiface_pcm_init(struct hiface_chip *chip,
 		    const char *pcm_stream_name,
 		    u8 extra_freq)
@@ -561,6 +571,8 @@ int hiface_pcm_init(struct hiface_chip *chip,
 	}
 
 	pcm->private_data = rt;
+	pcm->private_free = hiface_pcm_free;
+
 	strcpy(pcm->name, "AsyncAudio USB");
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &pcm_ops);
 
