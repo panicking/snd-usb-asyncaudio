@@ -494,6 +494,35 @@ static int hiface_pcm_init_urb(struct pcm_urb *urb,
 	return 0;
 }
 
+void hiface_pcm_abort(struct hiface_chip *chip)
+{
+	struct pcm_runtime *rt = chip->pcm;
+
+	if (rt) {
+		rt->panic = true;
+
+		if (rt->playback.instance) {
+			snd_pcm_stop(rt->playback.instance,
+					SNDRV_PCM_STATE_XRUN);
+		}
+		mutex_lock(&rt->stream_mutex);
+		hiface_pcm_stream_stop(rt);
+		mutex_unlock(&rt->stream_mutex);
+	}
+}
+
+void hiface_pcm_destroy(struct hiface_chip *chip)
+{
+	struct pcm_runtime *rt = chip->pcm;
+	int i;
+
+	for (i = 0; i < PCM_N_URBS; i++)
+		kfree(rt->out_urbs[i].buffer);
+
+	kfree(chip->pcm);
+	chip->pcm = NULL;
+}
+
 int hiface_pcm_init(struct hiface_chip *chip,
 		    const char *pcm_stream_name,
 		    u8 extra_freq)
@@ -543,33 +572,4 @@ int hiface_pcm_init(struct hiface_chip *chip,
 
 	chip->pcm = rt;
 	return 0;
-}
-
-void hiface_pcm_abort(struct hiface_chip *chip)
-{
-	struct pcm_runtime *rt = chip->pcm;
-
-	if (rt) {
-		rt->panic = true;
-
-		if (rt->playback.instance) {
-			snd_pcm_stop(rt->playback.instance,
-					SNDRV_PCM_STATE_XRUN);
-		}
-		mutex_lock(&rt->stream_mutex);
-		hiface_pcm_stream_stop(rt);
-		mutex_unlock(&rt->stream_mutex);
-	}
-}
-
-void hiface_pcm_destroy(struct hiface_chip *chip)
-{
-	struct pcm_runtime *rt = chip->pcm;
-	int i;
-
-	for (i = 0; i < PCM_N_URBS; i++)
-		kfree(rt->out_urbs[i].buffer);
-
-	kfree(chip->pcm);
-	chip->pcm = NULL;
 }
