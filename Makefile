@@ -1,4 +1,4 @@
-snd-usb-asyncaudio-objs += chip.o control.o pcm.o
+snd-usb-asyncaudio-objs += chip.o pcm.o
 obj-m += snd-usb-asyncaudio.o
 
 KDIR := /lib/modules/$(shell uname -r)/build

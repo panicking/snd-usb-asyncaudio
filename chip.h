@@ -23,6 +23,5 @@ struct hiface_chip {
 	bool shutdown;
 
 	struct pcm_runtime *pcm;
-	struct control_runtime *control;
 };
 #endif /* HIFACE_CHIP_H */

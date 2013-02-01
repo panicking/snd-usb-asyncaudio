@@ -24,5 +24,4 @@
 
 struct hiface_chip;
 struct pcm_runtime;
-struct control_runtime;
 #endif /* HIFACE_COMMON_H */

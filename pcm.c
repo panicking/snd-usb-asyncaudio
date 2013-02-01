@@ -19,7 +19,6 @@
 
 #include "pcm.h"
 #include "chip.h"
-#include "control.h"
 
 #define PCM_N_URBS		8
 #define PCM_MAX_PACKET_SIZE	4096
@@ -114,10 +113,30 @@ static const struct snd_pcm_hardware pcm_hw = {
 
 static int hiface_pcm_set_rate(struct pcm_runtime *rt)
 {
+	u8 rate_value[] = { 0x43, 0x4b, 0x42, 0x4a, 0x40, 0x48, 0x58, 0x68 };
 	int ret;
-	struct control_runtime *ctrl_rt = rt->chip->control;
+	struct usb_device *device = rt->chip->dev;
 
-	ret = ctrl_rt->set_rate(ctrl_rt, rt->rate);
+	/* TODO: handle stored rate?
+	if (rate == rt->stored_rate)
+		return 0;
+	*/
+
+	ret = usb_set_interface(device, 0, 0);
+	if (ret < 0)
+		return ret;
+	/*
+	 * USBIO: Vendor 0xb0(wValue=0x0043, wIndex=0x0000)
+	 * 43 b0 43 00 00 00 00 00
+	 * USBIO: Vendor 0xb0(wValue=0x004b, wIndex=0x0000)
+	 * 43 b0 4b 00 00 00 00 00
+	 * This control message doesn't have any ack from the
+	 * other side
+	 */
+	ret = usb_control_msg(device, usb_sndctrlpipe(device, 0),
+				0xb0,
+				USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
+				rate_value[rt->rate], 0, NULL, 0, 100);
 	if (ret < 0) {
 		snd_printk(KERN_ERR "Error setting samplerate %d.\n",
 				rates[rt->rate]);

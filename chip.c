@@ -15,7 +15,6 @@
 
 #include "chip.h"
 #include "pcm.h"
-#include "control.h"
 
 #include <linux/moduleparam.h>
 #include <linux/interrupt.h>
@@ -67,8 +66,6 @@ static void hiface_chip_abort(struct hiface_chip *chip)
 static void hiface_chip_destroy(struct hiface_chip *chip)
 {
 	if (chip) {
-		if (chip->control)
-			hiface_control_destroy(chip);
 		if (chip->card)
 			snd_card_free(chip->card);
 
@@ -188,12 +185,6 @@ static int hiface_chip_probe(struct usb_interface *intf,
 
 	ret = hiface_pcm_init(chip, chip->card->shortname,
 			      quirk ? quirk->extra_freq : 0);
-	if (ret < 0) {
-		hiface_chip_destroy(chip);
-		return ret;
-	}
-
-	ret = hiface_control_init(chip);
 	if (ret < 0) {
 		hiface_chip_destroy(chip);
 		return ret;
