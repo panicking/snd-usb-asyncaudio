@@ -16,7 +16,7 @@
 #ifndef HIFACE_PCM_H
 #define HIFACE_PCM_H
 
-#include "common.h"
+struct hiface_chip;
 
 int hiface_pcm_init(struct hiface_chip *chip,
 		    const char *pcm_stream_name,

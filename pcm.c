@@ -15,6 +15,7 @@
  * (at your option) any later version.
  */
 
+#include <linux/slab.h>
 #include <sound/pcm.h>
 
 #include "pcm.h"

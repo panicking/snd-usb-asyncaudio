@@ -13,15 +13,12 @@
  * (at your option) any later version.
  */
 
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <sound/initval.h>
+
 #include "chip.h"
 #include "pcm.h"
-
-#include <linux/moduleparam.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/gfp.h>
-#include <sound/initval.h>
 
 MODULE_AUTHOR("Michael Trimarchi <michael@amarulasolutions.com>");
 MODULE_AUTHOR("Antonio Ospite <ao2@amarulasolutions.com>");
