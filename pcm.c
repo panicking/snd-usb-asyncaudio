@@ -126,11 +126,6 @@ static int hiface_pcm_set_rate(struct pcm_runtime *rt, int rate)
 		return -EINVAL;
 	}
 
-	/* TODO: handle stored rate?
-	if (rate == rt->stored_rate)
-		return 0;
-	*/
-
 	ret = usb_set_interface(device, 0, 0);
 	if (ret < 0)
 		return ret;
