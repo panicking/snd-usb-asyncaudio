@@ -552,9 +552,7 @@ static void hiface_pcm_free(struct snd_pcm *pcm)
 		hiface_pcm_destroy(rt->chip);
 }
 
-int hiface_pcm_init(struct hiface_chip *chip,
-		    const char *pcm_stream_name,
-		    u8 extra_freq)
+int hiface_pcm_init(struct hiface_chip *chip, u8 extra_freq)
 {
 	int i;
 	int ret;
@@ -579,10 +577,7 @@ int hiface_pcm_init(struct hiface_chip *chip,
 		hiface_pcm_init_urb(&rt->out_urbs[i], chip, OUT_EP,
 				hiface_pcm_out_urb_handler);
 
-	if (pcm_stream_name)
-		ret = snd_pcm_new(chip->card, pcm_stream_name, 0, 1, 0, &pcm);
-	else
-		ret = snd_pcm_new(chip->card, "HiFace M2Tech", 0, 1, 0, &pcm);
+	ret = snd_pcm_new(chip->card, "USB-SPDIF Audio", 0, 1, 0, &pcm);
 	if (ret < 0) {
 		kfree(rt);
 		pr_err("Cannot create pcm instance\n");
@@ -592,7 +587,7 @@ int hiface_pcm_init(struct hiface_chip *chip,
 	pcm->private_data = rt;
 	pcm->private_free = hiface_pcm_free;
 
-	strcpy(pcm->name, "AsyncAudio USB");
+	strcpy(pcm->name, "USB-SPDIF Audio");
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &pcm_ops);
 
 	snd_pcm_lib_preallocate_pages_for_all(pcm,

@@ -161,8 +161,7 @@ static int hiface_chip_probe(struct usb_interface *intf,
 		}
 	}
 
-	ret = hiface_pcm_init(chip, chip->card->shortname,
-			      quirk ? quirk->extra_freq : 0);
+	ret = hiface_pcm_init(chip, quirk ? quirk->extra_freq : 0);
 	if (ret < 0)
 		goto err_chip_destroy;
 
