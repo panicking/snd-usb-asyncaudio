@@ -79,11 +79,10 @@ static int hiface_chip_create(struct usb_device *device, int idx,
 
 	strcpy(card->driver, DRIVER_NAME);
 
-	if (quirk && quirk->device_short_name) {
+	if (quirk && quirk->device_short_name)
 		strcpy(card->shortname, quirk->device_short_name);
-	} else {
+	else
 		strcpy(card->shortname, "M2Tech generic audio");
-	}
 
 	sprintf(card->longname, "%s at %d:%d", card->shortname,
 			device->bus->busnum, device->devnum);
