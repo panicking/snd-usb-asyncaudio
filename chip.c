@@ -46,7 +46,7 @@ static struct hiface_chip *chips[SNDRV_CARDS] = SNDRV_DEFAULT_PTR;
 static DEFINE_MUTEX(register_mutex);
 
 struct hiface_vendor_quirk {
-	const char *driver_short_name;
+	const char *device_short_name;
 	u8 extra_freq;
 };
 
@@ -79,8 +79,8 @@ static int hiface_chip_create(struct usb_device *device, int idx,
 
 	strcpy(card->driver, DRIVER_NAME);
 
-	if (quirk && quirk->driver_short_name) {
-		strcpy(card->shortname, quirk->driver_short_name);
+	if (quirk && quirk->device_short_name) {
+		strcpy(card->shortname, quirk->device_short_name);
 	} else {
 		strcpy(card->shortname, "M2Tech generic audio");
 	}
@@ -217,104 +217,104 @@ static struct usb_device_id device_table[] = {
 	{
 		USB_DEVICE(0x04b4, 0x930b),
 		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.driver_short_name = "hiFace",
+			.device_short_name = "hiFace",
 		}
 	},
 	{
 		USB_DEVICE(0x04b4, 0x0384),
 		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.driver_short_name = "Young",
+			.device_short_name = "Young",
 			.extra_freq = 1,
 		}
 	},
 	{
 		USB_DEVICE(0x04b4, 0x931E),
 		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.driver_short_name = "AUDIA",
+			.device_short_name = "AUDIA",
 		}
 	},
 	{
 		USB_DEVICE(0x04b4, 0x931D),
 		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.driver_short_name = "Corrson",
+			.device_short_name = "Corrson",
 		}
 	},
 	{
 		USB_DEVICE(0x04b4, 0x9320),
 		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.driver_short_name = "Empirical",
+			.device_short_name = "Empirical",
 		}
 	},
 	{
 		USB_DEVICE(0x04b4, 0x931B),
 		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.driver_short_name = "North Star",
+			.device_short_name = "North Star",
 		}
 	},
 	{
 		USB_DEVICE(0x04b4, 0x9321),
 		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.driver_short_name = "Rockna",
+			.device_short_name = "Rockna",
 		}
 	},
 	{
 		USB_DEVICE(0x04b4, 0x931F),
 		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.driver_short_name = "SL Audio",
+			.device_short_name = "SL Audio",
 		}
 	},
 	{
 		USB_DEVICE(0x04b4, 0x931C),
 		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.driver_short_name = "W4S Young",
+			.device_short_name = "W4S Young",
 		}
 	},
 	{
 		USB_DEVICE(0x245F, 0x931C),
 		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.driver_short_name = "CHORD",
+			.device_short_name = "CHORD",
 		}
 	},
 	{
 		USB_DEVICE(0x25C6, 0x9002),
 		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.driver_short_name = "Vitus",
+			.device_short_name = "Vitus",
 		}
 	},
 	{
 		USB_DEVICE(0x249C, 0x9006),
 		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.driver_short_name = "CAD",
+			.device_short_name = "CAD",
 		}
 	},
 	{
 		USB_DEVICE(0x249C, 0x932C),
 		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.driver_short_name = "Eeaudio",
+			.device_short_name = "Eeaudio",
 		}
 	},
 	{
 		USB_DEVICE(0x249C, 0x9002),
 		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.driver_short_name = "Metronome",
+			.device_short_name = "Metronome",
 		}
 	},
 	{
 		USB_DEVICE(0x249C, 0x9001),
 		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.driver_short_name = "Pathos",
+			.device_short_name = "Pathos",
 		}
 	},
 	{
 		USB_DEVICE(0x249C, 0x931C),
 		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.driver_short_name = "Rotel",
+			.device_short_name = "Rotel",
 		}
 	},
 	{
 		USB_DEVICE(0x249C, 0x9008),
 		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.driver_short_name = "Audio Esclusive",
+			.device_short_name = "Audio Esclusive",
 		}
 	},
 	{}
