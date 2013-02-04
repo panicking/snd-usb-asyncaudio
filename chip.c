@@ -24,6 +24,7 @@
 #include <sound/initval.h>
 
 MODULE_AUTHOR("Michael Trimarchi <michael@amarulasolutions.com>");
+MODULE_AUTHOR("Antonio Ospite <ao2@amarulasolutions.com>");
 MODULE_DESCRIPTION("M2Tech HiFace USB audio driver");
 MODULE_LICENSE("GPL v2");
 MODULE_SUPPORTED_DEVICE("{{HiFace, Evo}}");
