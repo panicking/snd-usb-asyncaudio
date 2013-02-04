@@ -530,7 +530,7 @@ void hiface_pcm_abort(struct hiface_chip *chip)
 	}
 }
 
-void hiface_pcm_destroy(struct hiface_chip *chip)
+static void hiface_pcm_destroy(struct hiface_chip *chip)
 {
 	struct pcm_runtime *rt = chip->pcm;
 	int i;
