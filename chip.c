@@ -1,9 +1,10 @@
 /*
- * Linux driver for M2Tech HiFace
+ * Linux driver for M2Tech HiFace compatible devices
  *
- * Author:	Michael Trimarchi <michael@amarulasolutions.com>
- * Created:	June 01, 2012
- * Copyright:	(C) M2TECH S.r.l and Amarula Solutions B.V.
+ * Copyright 2012-2013 (C) M2TECH S.r.l and Amarula Solutions B.V.
+ *
+ * Authors:  Michael Trimarchi <michael@amarulasolutions.com>
+ *           Antonio Ospite <ao2@amarulasolutions.com>
  *
  * The driver is based on the work done in TerraTec DMX 6Fire USB
  *

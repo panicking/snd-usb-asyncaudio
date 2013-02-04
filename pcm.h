@@ -1,11 +1,12 @@
 /*
- * Linux driver for HiFace M2Tech
+ * Linux driver for M2Tech HiFace compatible devices
  *
- * PCM driver
+ * Copyright 2012-2013 (C) M2TECH S.r.l and Amarula Solutions B.V.
  *
- * Author:	Michael Trimarchi <michael@amarulasolutions.com>
- * Created:	15 July 2012
- * Copyright:	(C) M2TECH S.r.l and Amarula Solutions B.V.
+ * Authors:  Michael Trimarchi <michael@amarulasolutions.com>
+ *           Antonio Ospite <ao2@amarulasolutions.com>
+ *
+ * The driver is based on the work done in TerraTec DMX 6Fire USB
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
