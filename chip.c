@@ -50,19 +50,6 @@ struct snd_vendor_quirk {
 	u8 extra_freq;
 };
 
-static void hiface_chip_abort(struct hiface_chip *chip)
-{
-	if (chip) {
-		if (chip->pcm)
-			hiface_pcm_abort(chip);
-
-		if (chip->card) {
-			snd_card_free_when_closed(chip->card);
-			chip->card = NULL;
-		}
-	}
-}
-
 static int hiface_dev_free(struct snd_device *device)
 {
 	struct hiface_chip *chip = device->device_data;
@@ -222,7 +209,8 @@ static void hiface_chip_disconnect(struct usb_interface *intf)
 		mutex_unlock(&register_mutex);
 
 		chip->shutdown = true;
-		hiface_chip_abort(chip);
+		hiface_pcm_abort(chip);
+		snd_card_free_when_closed(card);
 	}
 }
 
