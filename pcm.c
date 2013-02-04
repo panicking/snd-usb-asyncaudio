@@ -495,7 +495,7 @@ static struct snd_pcm_ops pcm_ops = {
 
 static int hiface_pcm_init_urb(struct pcm_urb *urb,
 			       struct hiface_chip *chip,
-			       int ep,
+			       unsigned int ep,
 			       void (*handler)(struct urb *))
 {
 	urb->chip = chip;
