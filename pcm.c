@@ -20,8 +20,10 @@
 #include "pcm.h"
 #include "chip.h"
 
-#define PCM_N_URBS		8
-#define PCM_MAX_PACKET_SIZE	4096
+#define OUT_EP              0x2
+#define PCM_N_URBS          8
+#define PCM_MAX_PACKET_SIZE 4096
+#define MAX_BUFSIZE         (2 * PCM_N_URBS * PCM_MAX_PACKET_SIZE)
 
 struct pcm_urb {
 	struct hiface_chip *chip;
@@ -36,8 +38,15 @@ struct pcm_substream {
 	struct snd_pcm_substream *instance;
 
 	bool active;
-	snd_pcm_uframes_t dma_off;	/* current position in alsa dma_area */
-	snd_pcm_uframes_t period_off;	/* current position in current period */
+	snd_pcm_uframes_t dma_off;    /* current position in alsa dma_area */
+	snd_pcm_uframes_t period_off; /* current position in current period */
+};
+
+enum { /* pcm streaming states */
+	STREAM_DISABLED, /* no pcm streaming */
+	STREAM_STARTING, /* pcm streaming requested, waiting to become ready */
+	STREAM_RUNNING,  /* pcm streaming running */
+	STREAM_STOPPING
 };
 
 struct pcm_runtime {
@@ -50,7 +59,7 @@ struct pcm_runtime {
 	struct pcm_urb out_urbs[PCM_N_URBS];
 
 	struct mutex stream_mutex;
-	u8 stream_state; /* one of STREAM_XXX (pcm.c) */
+	u8 stream_state; /* one of STREAM_XXX */
 	u8 rate; /* one of PCM_RATE_XXX */
 	u8 extra_freq;
 	wait_queue_head_t stream_wait_queue;
@@ -65,15 +74,6 @@ static const int rates_alsaid[] = {
 	SNDRV_PCM_RATE_176400, SNDRV_PCM_RATE_192000,
 	SNDRV_PCM_RATE_KNOT, SNDRV_PCM_RATE_KNOT };
 
-#define OUT_EP		2
-#define MAX_BUFSIZE	(2 * PCM_N_URBS * PCM_MAX_PACKET_SIZE)
-
-enum { /* pcm streaming states */
-	STREAM_DISABLED, /* no pcm streaming */
-	STREAM_STARTING, /* pcm streaming requested, waiting to become ready */
-	STREAM_RUNNING, /* pcm streaming running */
-	STREAM_STOPPING
-};
 
 static inline void swap_word(u8 *dest, u8 *orig)
 {
