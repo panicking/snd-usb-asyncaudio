@@ -1,5 +1,5 @@
-snd-usb-asyncaudio-objs += chip.o pcm.o
-obj-m += snd-usb-asyncaudio.o
+snd-usb-hiface-objs += chip.o pcm.o
+obj-m += snd-usb-hiface.o
 
 KDIR := /lib/modules/$(shell uname -r)/build
 PWD := $(shell pwd)

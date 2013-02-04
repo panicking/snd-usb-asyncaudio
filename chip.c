@@ -31,6 +31,7 @@ static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX; /* Index 0-max */
 static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR; /* Id for card */
 static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP; /* Enable this card */
 
+#define DRIVER_NAME "snd-usb-hiface"
 #define CARD_NAME "HiFace"
 
 module_param_array(index, int, NULL, 0444);
@@ -76,7 +77,7 @@ static int hiface_chip_create(struct usb_device *device, int idx,
 		return ret;
 	}
 
-	strcpy(card->driver, "snd-async-audio");
+	strcpy(card->driver, DRIVER_NAME);
 
 	if (quirk && quirk->driver_short_name) {
 		strcpy(card->shortname, quirk->driver_short_name);
@@ -117,11 +118,11 @@ static int hiface_chip_probe(struct usb_interface *intf,
 	struct hiface_chip *chip;
 	struct usb_device *device = interface_to_usbdev(intf);
 
-	pr_info("Probe m2-tech driver.\n");
+	pr_info("Probe " DRIVER_NAME " driver.\n");
 
 	ret = usb_set_interface(device, 0, 0);
 	if (ret != 0) {
-		snd_printk(KERN_ERR "can't set first interface.\n");
+		snd_printk(KERN_ERR "can't set first interface for " CARD_NAME " device.\n");
 		return -EIO;
 	}
 
@@ -131,7 +132,7 @@ static int hiface_chip_probe(struct usb_interface *intf,
 	for (i = 0; i < SNDRV_CARDS; i++) {
 		if (chips[i] && chips[i]->dev == device) {
 			if (chips[i]->shutdown) {
-				snd_printk(KERN_ERR "HiFace device is in the shutdown state, cannot create a card instance\n");
+				snd_printk(KERN_ERR CARD_NAME " device is in the shutdown state, cannot create a card instance\n");
 				ret = -ENODEV;
 				goto err;
 			}
@@ -154,7 +155,7 @@ static int hiface_chip_probe(struct usb_interface *intf,
 				break;
 			}
 		if (!chip) {
-			snd_printk(KERN_ERR "no available HiFace audio device\n");
+			snd_printk(KERN_ERR "no available " CARD_NAME " audio device\n");
 			ret = -ENODEV;
 			goto err;
 		}
@@ -167,7 +168,7 @@ static int hiface_chip_probe(struct usb_interface *intf,
 
 	ret = snd_card_register(chip->card);
 	if (ret < 0) {
-		snd_printk(KERN_ERR "cannot register card\n");
+		snd_printk(KERN_ERR "cannot register " CARD_NAME " card\n");
 		goto err_chip_destroy;
 	}
 
@@ -323,7 +324,7 @@ static struct usb_device_id device_table[] = {
 MODULE_DEVICE_TABLE(usb, device_table);
 
 static struct usb_driver snd_usb_driver = {
-	.name = "snd-usb-hiface",
+	.name = DRIVER_NAME,
 	.probe = hiface_chip_probe,
 	.disconnect = hiface_chip_disconnect,
 	.id_table = device_table,
