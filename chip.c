@@ -322,25 +322,26 @@ static struct usb_device_id device_table[] = {
 
 MODULE_DEVICE_TABLE(usb, device_table);
 
-static struct usb_driver snd_usb_driver = {
+static struct usb_driver hiface_usb_driver = {
 	.name = DRIVER_NAME,
 	.probe = hiface_chip_probe,
 	.disconnect = hiface_chip_disconnect,
 	.id_table = device_table,
 };
+
 #if 0
-module_usb_driver(snd_usb_driver);
+module_usb_driver(hiface_usb_driver);
 #else
-static int __init snd_module_init(void)
+static int __init hiface_module_init(void)
 {
-	return usb_register(&snd_usb_driver);
+	return usb_register(&hiface_usb_driver);
 }
 
-static void __exit snd_module_exit(void)
+static void __exit hiface_module_exit(void)
 {
-	usb_deregister(&snd_usb_driver);
+	usb_deregister(&hiface_usb_driver);
 }
 
-module_init(snd_module_init)
-module_exit(snd_module_exit)
+module_init(hiface_module_init)
+module_exit(hiface_module_exit)
 #endif
