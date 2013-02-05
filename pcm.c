@@ -238,7 +238,7 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 	pcm_buffer_size = snd_pcm_lib_buffer_bytes(sub->instance);
 
 	if (sub->dma_off + PCM_MAX_PACKET_SIZE <= pcm_buffer_size) {
-		pr_debug("%s: (1) buffer_size %x dma_offset %x\n", __func__,
+		pr_debug("%s: (1) buffer_size %#x dma_offset %#x\n", __func__,
 			 (unsigned int) pcm_buffer_size,
 			 (unsigned int) sub->dma_off);
 
@@ -250,7 +250,7 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 		unsigned int len = pcm_buffer_size - sub->dma_off;
 		source = alsa_rt->dma_area + sub->dma_off;
 
-		pr_debug("%s: (2) buffer_size %x dma_offset %x\n", __func__,
+		pr_debug("%s: (2) buffer_size %#x dma_offset %#x\n", __func__,
 			 (unsigned int) pcm_buffer_size,
 			 (unsigned int) sub->dma_off);
 
