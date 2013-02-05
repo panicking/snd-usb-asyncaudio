@@ -30,7 +30,7 @@ struct pcm_urb {
 
 	struct urb instance;
 	struct usb_anchor submitted;
-	void *buffer;
+	u8 *buffer;
 };
 
 struct pcm_substream {
@@ -231,7 +231,7 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 	stride = alsa_rt->frame_bits / 8;
 
 	if (alsa_rt->format == SNDRV_PCM_FORMAT_S32_LE)
-		dest = (u8 *)urb->buffer;
+		dest = urb->buffer;
 	else {
 		pr_err("Unsupported sample format\n");
 		return -EINVAL;
@@ -243,13 +243,13 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 			 (unsigned int) alsa_rt->buffer_size * stride,
 			 (unsigned int) sub->dma_off);
 
-		source = (u8 *)(alsa_rt->dma_area + sub->dma_off);
+		source = alsa_rt->dma_area + sub->dma_off;
 		for (i = 0; i < PCM_MAX_PACKET_SIZE; i += 4)
 			swap_word(dest + i, source + i);
 	} else {
 		/* wrap around at end of ring buffer */
 		unsigned int len = alsa_rt->buffer_size * stride - sub->dma_off;
-		source = (u8 *)(alsa_rt->dma_area + sub->dma_off);
+		source = alsa_rt->dma_area + sub->dma_off;
 
 		pr_debug("%s: (2) buffer_size %x dma_offset %x\n", __func__,
 			 (unsigned int) alsa_rt->buffer_size * stride,
@@ -258,7 +258,7 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 		for (i = 0; i < len; i += 4)
 			swap_word(dest + i, source + i);
 
-		source = (u8 *)alsa_rt->dma_area;
+		source = alsa_rt->dma_area;
 
 		for (i = 0; i < PCM_MAX_PACKET_SIZE - len; i += 4)
 			swap_word(dest + len + i, source + i);
