@@ -293,9 +293,10 @@ static void hiface_pcm_out_urb_handler(struct urb *usb_urb)
 	sub = &rt->playback;
 	spin_lock_irqsave(&sub->lock, flags);
 	if (sub->active) {
-		int ret = 0;
+		int ret;
+
 		ret = hiface_pcm_playback(sub, out_urb);
-		if (ret) {
+		if (ret < 0) {
 			spin_unlock_irqrestore(&sub->lock, flags);
 			goto out_fail;
 		}
