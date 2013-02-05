@@ -330,9 +330,8 @@ static int hiface_pcm_open(struct snd_pcm_substream *alsa_sub)
 	mutex_lock(&rt->stream_mutex);
 	alsa_rt->hw = pcm_hw;
 
-	if (alsa_sub->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+	if (alsa_sub->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		sub = &rt->playback;
-	}
 
 	if (!sub) {
 		mutex_unlock(&rt->stream_mutex);
