@@ -66,8 +66,14 @@ struct pcm_runtime {
 	bool stream_wait_cond;
 };
 
-static const int rates[] = { 44100, 48000, 88200, 96000, 176400, 192000,
+static const unsigned int rates[] = { 44100, 48000, 88200, 96000, 176400, 192000,
 			     352800, 384000 };
+static struct snd_pcm_hw_constraint_list constraints_rates = {
+	.count = ARRAY_SIZE(rates) - 2, /* by default rates up to 192000 are supported */
+	.list = rates,
+	.mask = 0,
+};
+
 static const int rates_alsaid[] = {
 	SNDRV_PCM_RATE_44100, SNDRV_PCM_RATE_48000,
 	SNDRV_PCM_RATE_88200, SNDRV_PCM_RATE_96000,
@@ -319,6 +325,7 @@ static int hiface_pcm_open(struct snd_pcm_substream *alsa_sub)
 	struct pcm_runtime *rt = snd_pcm_substream_chip(alsa_sub);
 	struct pcm_substream *sub = NULL;
 	struct snd_pcm_runtime *alsa_rt = alsa_sub->runtime;
+	int ret;
 
 	if (rt->panic)
 		return -EPIPE;
@@ -340,8 +347,18 @@ static int hiface_pcm_open(struct snd_pcm_substream *alsa_sub)
 		return -EINVAL;
 	}
 
-	if (rt->extra_freq)
+	if (rt->extra_freq) {
 		alsa_rt->hw.rate_max = 384000;
+		constraints_rates.count = ARRAY_SIZE(rates);
+	}
+
+	ret = snd_pcm_hw_constraint_list(alsa_sub->runtime, 0,
+					 SNDRV_PCM_HW_PARAM_RATE,
+					 &constraints_rates);
+	if (ret < 0) {
+		mutex_unlock(&rt->stream_mutex);
+		return ret;
+	}
 
 	sub->instance = alsa_sub;
 	sub->active = false;
