@@ -554,7 +554,7 @@ int hiface_pcm_init(struct hiface_chip *chip, u8 extra_freq)
 	struct snd_pcm *pcm;
 	struct pcm_runtime *rt;
 
-	rt = kzalloc(sizeof(struct pcm_runtime), GFP_KERNEL);
+	rt = kzalloc(sizeof(*rt), GFP_KERNEL);
 	if (!rt)
 		return -ENOMEM;
 
