@@ -326,10 +326,10 @@ static int hiface_pcm_open(struct snd_pcm_substream *alsa_sub)
 	struct snd_pcm_runtime *alsa_rt = alsa_sub->runtime;
 	int ret;
 
+	pr_debug("%s: called.\n", __func__);
+
 	if (rt->panic)
 		return -EPIPE;
-
-	pr_debug("%s: called.\n", __func__);
 
 	mutex_lock(&rt->stream_mutex);
 	alsa_rt->hw = pcm_hw;
