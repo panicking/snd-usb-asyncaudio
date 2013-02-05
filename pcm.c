@@ -225,10 +225,8 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 {
 	struct snd_pcm_runtime *alsa_rt = sub->instance->runtime;
 	u8 *dest, *source;
-	unsigned int stride;
+	unsigned int pcm_buffer_size;
 	int i;
-
-	stride = alsa_rt->frame_bits / 8;
 
 	if (alsa_rt->format == SNDRV_PCM_FORMAT_S32_LE)
 		dest = urb->buffer;
@@ -237,10 +235,11 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 		return -EINVAL;
 	}
 
-	if (sub->dma_off + PCM_MAX_PACKET_SIZE <=
-		(alsa_rt->buffer_size * stride)) {
+	pcm_buffer_size = snd_pcm_lib_buffer_bytes(sub->instance);
+
+	if (sub->dma_off + PCM_MAX_PACKET_SIZE <= pcm_buffer_size) {
 		pr_debug("%s: (1) buffer_size %x dma_offset %x\n", __func__,
-			 (unsigned int) alsa_rt->buffer_size * stride,
+			 (unsigned int) pcm_buffer_size,
 			 (unsigned int) sub->dma_off);
 
 		source = alsa_rt->dma_area + sub->dma_off;
@@ -248,11 +247,11 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 			swap_word(dest + i, source + i);
 	} else {
 		/* wrap around at end of ring buffer */
-		unsigned int len = alsa_rt->buffer_size * stride - sub->dma_off;
+		unsigned int len = pcm_buffer_size - sub->dma_off;
 		source = alsa_rt->dma_area + sub->dma_off;
 
 		pr_debug("%s: (2) buffer_size %x dma_offset %x\n", __func__,
-			 (unsigned int) alsa_rt->buffer_size * stride,
+			 (unsigned int) pcm_buffer_size,
 			 (unsigned int) sub->dma_off);
 
 		for (i = 0; i < len; i += 4)
@@ -264,8 +263,8 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 			swap_word(dest + len + i, source + i);
 	}
 	sub->dma_off += PCM_MAX_PACKET_SIZE;
-	if (sub->dma_off >= (alsa_rt->buffer_size * stride))
-		sub->dma_off -= (alsa_rt->buffer_size * stride);
+	if (sub->dma_off >= pcm_buffer_size)
+		sub->dma_off -= pcm_buffer_size;
 
 	sub->period_off += PCM_MAX_PACKET_SIZE;
 
