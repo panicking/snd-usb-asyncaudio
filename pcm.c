@@ -467,15 +467,15 @@ static snd_pcm_uframes_t hiface_pcm_pointer(struct snd_pcm_substream *alsa_sub)
 	struct pcm_substream *sub = hiface_pcm_get_substream(alsa_sub);
 	struct pcm_runtime *rt = snd_pcm_substream_chip(alsa_sub);
 	unsigned long flags;
-	snd_pcm_uframes_t ret;
+	snd_pcm_uframes_t dma_offset;
 
 	if (rt->panic || !sub)
 		return SNDRV_PCM_STATE_XRUN;
 
 	spin_lock_irqsave(&sub->lock, flags);
-	ret = sub->dma_off;
+	dma_offset = sub->dma_off;
 	spin_unlock_irqrestore(&sub->lock, flags);
-	return ret / (alsa_sub->runtime->frame_bits / 8);
+	return bytes_to_frames(alsa_sub->runtime, dma_offset);
 }
 
 static struct snd_pcm_ops pcm_ops = {
