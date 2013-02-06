@@ -234,13 +234,12 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 	unsigned int pcm_buffer_size;
 	int i;
 
-	if (alsa_rt->format == SNDRV_PCM_FORMAT_S32_LE)
-		dest = urb->buffer;
-	else {
+	if (alsa_rt->format != SNDRV_PCM_FORMAT_S32_LE) {
 		pr_err("Unsupported sample format\n");
 		return -EINVAL;
 	}
 
+	dest = urb->buffer;
 	pcm_buffer_size = snd_pcm_lib_buffer_bytes(sub->instance);
 
 	if (sub->dma_off + PCM_MAX_PACKET_SIZE <= pcm_buffer_size) {
