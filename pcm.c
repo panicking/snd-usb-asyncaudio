@@ -80,14 +80,6 @@ static const int rates_alsaid[] = {
 	SNDRV_PCM_RATE_176400, SNDRV_PCM_RATE_192000,
 	SNDRV_PCM_RATE_KNOT, SNDRV_PCM_RATE_KNOT };
 
-
-static inline void swap_word(u8 *dest, u8 *orig)
-{
-	u16 *src = (u16 *)orig, *dst = (u16 *)dest;
-	*(dst + 1) = *src;
-	*dst = *(src + 1);
-}
-
 static const struct snd_pcm_hardware pcm_hw = {
 	.info = SNDRV_PCM_INFO_MMAP |
 		SNDRV_PCM_INFO_INTERLEAVED |
@@ -229,21 +221,28 @@ static int hiface_pcm_stream_start(struct pcm_runtime *rt)
 }
 
 
+/* The hardware wants word-swapped 32-bit values */
+void memcpy_swahw32(u8 *dest, u8 *src, unsigned int n)
+{
+	unsigned int i;
+
+	for (i = 0; i < n / 4; i++)
+		((u32 *)dest)[i] = swahw32(((u32 *)src)[i]);
+}
+
 /* call with substream locked */
 static int hiface_pcm_playback(struct pcm_substream *sub,
 		struct pcm_urb *urb)
 {
 	struct snd_pcm_runtime *alsa_rt = sub->instance->runtime;
-	u8 *dest, *source;
+	u8 *source;
 	unsigned int pcm_buffer_size;
-	int i;
 
 	if (alsa_rt->format != SNDRV_PCM_FORMAT_S32_LE) {
 		pr_err("Unsupported sample format\n");
 		return -EINVAL;
 	}
 
-	dest = urb->buffer;
 	pcm_buffer_size = snd_pcm_lib_buffer_bytes(sub->instance);
 
 	if (sub->dma_off + PCM_MAX_PACKET_SIZE <= pcm_buffer_size) {
@@ -252,24 +251,23 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 			 (unsigned int) sub->dma_off);
 
 		source = alsa_rt->dma_area + sub->dma_off;
-		for (i = 0; i < PCM_MAX_PACKET_SIZE; i += 4)
-			swap_word(dest + i, source + i);
+		memcpy_swahw32(urb->buffer, source, PCM_MAX_PACKET_SIZE);
 	} else {
 		/* wrap around at end of ring buffer */
-		unsigned int len = pcm_buffer_size - sub->dma_off;
-		source = alsa_rt->dma_area + sub->dma_off;
+		unsigned int len;
 
 		pr_debug("%s: (2) buffer_size %#x dma_offset %#x\n", __func__,
 			 (unsigned int) pcm_buffer_size,
 			 (unsigned int) sub->dma_off);
 
-		for (i = 0; i < len; i += 4)
-			swap_word(dest + i, source + i);
+		len = pcm_buffer_size - sub->dma_off;
+
+		source = alsa_rt->dma_area + sub->dma_off;
+		memcpy_swahw32(urb->buffer, source, len);
 
 		source = alsa_rt->dma_area;
-
-		for (i = 0; i < PCM_MAX_PACKET_SIZE - len; i += 4)
-			swap_word(dest + len + i, source + i);
+		memcpy_swahw32(urb->buffer + len, source,
+			       PCM_MAX_PACKET_SIZE - len);
 	}
 	sub->dma_off += PCM_MAX_PACKET_SIZE;
 	if (sub->dma_off >= pcm_buffer_size)
