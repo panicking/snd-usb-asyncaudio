@@ -117,7 +117,7 @@ static const struct snd_pcm_hardware pcm_hw = {
 	.periods_max = 1024
 };
 
-static int hiface_pcm_set_rate(struct pcm_runtime *rt, int rate)
+static int hiface_pcm_set_rate(struct pcm_runtime *rt, unsigned int rate)
 {
 	u8 rate_value[] = { 0x43, 0x4b, 0x42, 0x4a, 0x40, 0x48, 0x58, 0x68 };
 	int ret;
