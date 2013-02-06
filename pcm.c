@@ -337,8 +337,60 @@ static int hiface_pcm_open(struct snd_pcm_substream *alsa_sub)
 	alsa_rt->hw = pcm_hw;
 
 	if (alsa_sub->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+
+		/* XXX can we avoid setting hw.rates below?
+		 *
+		 * FWIU setting alsa_rt->hw.rates in the open callback can be
+		 * useful in two cases:
+		 *
+		 *   - different hardware revisions have different
+		 *     capabilities
+		 *
+		 *   - different stream types must have the same capabilities
+		 * 
+		 * but in our case it should not be needed as we only have one
+		 * playback stream and we define the capabilities via
+		 * constraints already to avoid invalid rates to be used.
+		 *
+		 * Moreover, following the code stolen from 6fire it seems
+		 * impossible to get to setting alsa_rt->hw.rates here:
+		 *
+		 *   hiface_pcm_init:
+		 *     rt->rate = ARRAY_SIZE(rates);
+		 * 
+		 *   hiface_pcm_open:
+		 *     if (rt->rate < ARRAY_SIZE(rates))
+		 *       alsa_rt->hw.rates = rates_alsaid[rt->rate];
+		 *       // So it does not get here on the first open
+		 * 
+		 *   hiface_pcm_prepare:
+		 *     hiface_pcm_set_rate:
+		 *       for (rt->rate = 0; rt->rate < ARRAY_SIZE(rates); rt->rate++)
+		 *         if (rate == rates[rt->rate])
+		 *           break;
+		 * 
+		 *   hiface_pcm_close:
+		 *     rt->rate = ARRAY_SIZE(rates);
+		 *     // So it won't set alsa_rt->hw.rates at the next open either
+		 * 
+		 * So the only way to set alsa_rt->hw.rates is to have two
+		 * calls to the open callback, is that even possible? ALSA
+		 * does not allow sharing PCM streams AFAIK and we use only
+		 * one playback stream.
+		 * 
+		 * Maybe the 6fire driver was setting alsa_rt->hw.rates in
+		 * order to have the playback stream and the capture stream
+		 * use the same rate? I.e. the first open,prepare,set_rate()
+		 * sequence on one type of stream will decide the rate and the
+		 * second open on the other type would restrict the supported
+		 * rate to the one already in use, but I am not sure.
+		 * 
+		 * If the rationale makes sense then we don't need to set
+		 * alsa_rt->hw.rates and we can remove this and related code.
+		 */
 		if (rt->rate < ARRAY_SIZE(rates))
 			alsa_rt->hw.rates = rates_alsaid[rt->rate];
+
 		sub = &rt->playback;
 	}
 
