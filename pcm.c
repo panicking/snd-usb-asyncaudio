@@ -128,9 +128,6 @@ static int hiface_pcm_set_rate(struct pcm_runtime *rt, unsigned int rate)
 		return -EINVAL;
 	}
 
-	ret = usb_set_interface(device, 0, 0);
-	if (ret < 0)
-		return ret;
 	/*
 	 * USBIO: Vendor 0xb0(wValue=0x0043, wIndex=0x0000)
 	 * 43 b0 43 00 00 00 00 00
