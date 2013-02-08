@@ -214,12 +214,6 @@ static void hiface_chip_disconnect(struct usb_interface *intf)
 
 static struct usb_device_id device_table[] = {
 	{
-		USB_DEVICE(0x04b4, 0x930b),
-		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.device_name = "hiFace",
-		}
-	},
-	{
 		USB_DEVICE(0x04b4, 0x0384),
 		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
 			.device_name = "Young",
@@ -227,21 +221,9 @@ static struct usb_device_id device_table[] = {
 		}
 	},
 	{
-		USB_DEVICE(0x04b4, 0x931E),
+		USB_DEVICE(0x04b4, 0x930b),
 		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.device_name = "AUDIA",
-		}
-	},
-	{
-		USB_DEVICE(0x04b4, 0x931D),
-		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.device_name = "Corrson",
-		}
-	},
-	{
-		USB_DEVICE(0x04b4, 0x9320),
-		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.device_name = "Empirical",
+			.device_name = "hiFace",
 		}
 	},
 	{
@@ -251,9 +233,21 @@ static struct usb_device_id device_table[] = {
 		}
 	},
 	{
-		USB_DEVICE(0x04b4, 0x9321),
+		USB_DEVICE(0x04b4, 0x931C),
 		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.device_name = "Rockna",
+			.device_name = "W4S Young",
+		}
+	},
+	{
+		USB_DEVICE(0x04b4, 0x931D),
+		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
+			.device_name = "Corrson",
+		}
+	},
+	{
+		USB_DEVICE(0x04b4, 0x931E),
+		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
+			.device_name = "AUDIA",
 		}
 	},
 	{
@@ -263,9 +257,51 @@ static struct usb_device_id device_table[] = {
 		}
 	},
 	{
-		USB_DEVICE(0x04b4, 0x931C),
+		USB_DEVICE(0x04b4, 0x9320),
 		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.device_name = "W4S Young",
+			.device_name = "Empirical",
+		}
+	},
+	{
+		USB_DEVICE(0x04b4, 0x9321),
+		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
+			.device_name = "Rockna",
+		}
+	},
+	{
+		USB_DEVICE(0x249C, 0x9001),
+		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
+			.device_name = "Pathos",
+		}
+	},
+	{
+		USB_DEVICE(0x249C, 0x9002),
+		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
+			.device_name = "Metronome",
+		}
+	},
+	{
+		USB_DEVICE(0x249C, 0x9006),
+		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
+			.device_name = "CAD",
+		}
+	},
+	{
+		USB_DEVICE(0x249C, 0x9008),
+		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
+			.device_name = "Audio Esclusive",
+		}
+	},
+	{
+		USB_DEVICE(0x249C, 0x931C),
+		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
+			.device_name = "Rotel",
+		}
+	},
+	{
+		USB_DEVICE(0x249C, 0x932C),
+		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
+			.device_name = "Eeaudio",
 		}
 	},
 	{
@@ -278,42 +314,6 @@ static struct usb_device_id device_table[] = {
 		USB_DEVICE(0x25C6, 0x9002),
 		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
 			.device_name = "Vitus",
-		}
-	},
-	{
-		USB_DEVICE(0x249C, 0x9006),
-		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.device_name = "CAD",
-		}
-	},
-	{
-		USB_DEVICE(0x249C, 0x932C),
-		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.device_name = "Eeaudio",
-		}
-	},
-	{
-		USB_DEVICE(0x249C, 0x9002),
-		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.device_name = "Metronome",
-		}
-	},
-	{
-		USB_DEVICE(0x249C, 0x9001),
-		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.device_name = "Pathos",
-		}
-	},
-	{
-		USB_DEVICE(0x249C, 0x931C),
-		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.device_name = "Rotel",
-		}
-	},
-	{
-		USB_DEVICE(0x249C, 0x9008),
-		.driver_info = (unsigned long)&(const struct hiface_vendor_quirk) {
-			.device_name = "Audio Esclusive",
 		}
 	},
 	{}
