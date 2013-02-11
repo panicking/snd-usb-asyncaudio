@@ -22,8 +22,8 @@
 
 #define OUT_EP              0x2
 #define PCM_N_URBS          8
-#define PCM_MAX_PACKET_SIZE 4096
-#define MAX_BUFSIZE         (2 * PCM_N_URBS * PCM_MAX_PACKET_SIZE)
+#define PCM_PACKET_SIZE 4096
+#define MAX_BUFSIZE         (2 * PCM_N_URBS * PCM_PACKET_SIZE)
 
 struct pcm_urb {
 	struct hiface_chip *chip;
@@ -96,7 +96,7 @@ static const struct snd_pcm_hardware pcm_hw = {
 	.channels_min = 2,
 	.channels_max = 2,
 	.buffer_bytes_max = MAX_BUFSIZE,
-	.period_bytes_min = PCM_MAX_PACKET_SIZE,
+	.period_bytes_min = PCM_PACKET_SIZE,
 	.period_bytes_max = MAX_BUFSIZE,
 	.periods_min = 2,
 	.periods_max = 1024
@@ -215,7 +215,7 @@ static int hiface_pcm_stream_start(struct pcm_runtime *rt)
 		/* submit our out urbs zero init */
 		rt->stream_state = STREAM_STARTING;
 		for (i = 0; i < PCM_N_URBS; i++) {
-			memset(rt->out_urbs[i].buffer, 0, PCM_MAX_PACKET_SIZE);
+			memset(rt->out_urbs[i].buffer, 0, PCM_PACKET_SIZE);
 			usb_anchor_urb(&rt->out_urbs[i].instance,
 				       &rt->out_urbs[i].submitted);
 			ret = usb_submit_urb(&rt->out_urbs[i].instance,
@@ -269,13 +269,13 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 
 	pcm_buffer_size = snd_pcm_lib_buffer_bytes(sub->instance);
 
-	if (sub->dma_off + PCM_MAX_PACKET_SIZE <= pcm_buffer_size) {
+	if (sub->dma_off + PCM_PACKET_SIZE <= pcm_buffer_size) {
 		pr_debug("%s: (1) buffer_size %#x dma_offset %#x\n", __func__,
 			 (unsigned int) pcm_buffer_size,
 			 (unsigned int) sub->dma_off);
 
 		source = alsa_rt->dma_area + sub->dma_off;
-		memcpy_swahw32(urb->buffer, source, PCM_MAX_PACKET_SIZE);
+		memcpy_swahw32(urb->buffer, source, PCM_PACKET_SIZE);
 	} else {
 		/* wrap around at end of ring buffer */
 		unsigned int len;
@@ -291,13 +291,13 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 
 		source = alsa_rt->dma_area;
 		memcpy_swahw32(urb->buffer + len, source,
-			       PCM_MAX_PACKET_SIZE - len);
+			       PCM_PACKET_SIZE - len);
 	}
-	sub->dma_off += PCM_MAX_PACKET_SIZE;
+	sub->dma_off += PCM_PACKET_SIZE;
 	if (sub->dma_off >= pcm_buffer_size)
 		sub->dma_off -= pcm_buffer_size;
 
-	sub->period_off += PCM_MAX_PACKET_SIZE;
+	sub->period_off += PCM_PACKET_SIZE;
 
 	return 0;
 }
@@ -338,7 +338,7 @@ static void hiface_pcm_out_urb_handler(struct urb *usb_urb)
 			spin_unlock_irqrestore(&sub->lock, flags);
 		}
 	} else {
-		memset(out_urb->buffer, 0, PCM_MAX_PACKET_SIZE);
+		memset(out_urb->buffer, 0, PCM_PACKET_SIZE);
 		spin_unlock_irqrestore(&sub->lock, flags);
 	}
 out_fail:
@@ -534,13 +534,13 @@ static int hiface_pcm_init_urb(struct pcm_urb *urb,
 	urb->chip = chip;
 	usb_init_urb(&urb->instance);
 
-	urb->buffer = kzalloc(PCM_MAX_PACKET_SIZE, GFP_KERNEL);
+	urb->buffer = kzalloc(PCM_PACKET_SIZE, GFP_KERNEL);
 	if (!urb->buffer)
 		return -ENOMEM;
 
 	usb_fill_bulk_urb(&urb->instance, chip->dev,
 			  usb_sndbulkpipe(chip->dev, ep), (void *)urb->buffer,
-			  PCM_MAX_PACKET_SIZE, handler, urb);
+			  PCM_PACKET_SIZE, handler, urb);
 	init_usb_anchor(&urb->submitted);
 
 	return 0;
