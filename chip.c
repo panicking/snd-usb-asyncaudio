@@ -1,5 +1,5 @@
 /*
- * Linux driver for M2Tech HiFace compatible devices
+ * Linux driver for M2Tech hiFace compatible devices
  *
  * Copyright 2012-2013 (C) M2TECH S.r.l and Amarula Solutions B.V.
  *
@@ -23,7 +23,7 @@
 
 MODULE_AUTHOR("Michael Trimarchi <michael@amarulasolutions.com>");
 MODULE_AUTHOR("Antonio Ospite <ao2@amarulasolutions.com>");
-MODULE_DESCRIPTION("M2Tech HiFace USB audio driver");
+MODULE_DESCRIPTION("M2Tech hiFace USB-SPDIF audio driver");
 MODULE_LICENSE("GPL v2");
 MODULE_SUPPORTED_DEVICE("{{HiFace, Evo}}");
 
@@ -32,7 +32,7 @@ static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR; /* Id for card */
 static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP; /* Enable this card */
 
 #define DRIVER_NAME "snd-usb-hiface"
-#define CARD_NAME "HiFace"
+#define CARD_NAME "hiFace"
 
 module_param_array(index, int, NULL, 0444);
 MODULE_PARM_DESC(index, "Index value for " CARD_NAME " soundcard.");

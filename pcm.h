@@ -1,5 +1,5 @@
 /*
- * Linux driver for M2Tech HiFace compatible devices
+ * Linux driver for M2Tech hiFace compatible devices
  *
  * Copyright 2012-2013 (C) M2TECH S.r.l and Amarula Solutions B.V.
  *
