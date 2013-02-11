@@ -242,7 +242,7 @@ static int hiface_pcm_stream_start(struct pcm_runtime *rt)
 
 
 /* The hardware wants word-swapped 32-bit values */
-void memcpy_swahw32(u8 *dest, u8 *src, unsigned int n)
+static void memcpy_swahw32(u8 *dest, u8 *src, unsigned int n)
 {
 	unsigned int i;
 
