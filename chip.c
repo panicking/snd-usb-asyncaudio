@@ -115,7 +115,7 @@ static int hiface_chip_probe(struct usb_interface *intf,
 	struct hiface_chip *chip;
 	struct usb_device *device = interface_to_usbdev(intf);
 
-	pr_info("Probe " DRIVER_NAME " driver.\n");
+	pr_debug("Probe " DRIVER_NAME " driver.\n");
 
 	ret = usb_set_interface(device, 0, 0);
 	if (ret != 0) {
