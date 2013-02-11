@@ -66,13 +66,6 @@ struct hiface_vendor_quirk {
 	u8 extra_freq;
 };
 
-static int hiface_dev_free(struct snd_device *device)
-{
-	struct hiface_chip *chip = device->device_data;
-	kfree(chip);
-	return 0;
-}
-
 static int hiface_chip_create(struct usb_device *device, int idx,
 			      const struct hiface_vendor_quirk *quirk,
 			      struct hiface_chip **rchip)
@@ -81,14 +74,11 @@ static int hiface_chip_create(struct usb_device *device, int idx,
 	struct hiface_chip *chip;
 	int ret;
 	int len;
-	static struct snd_device_ops ops = {
-		.dev_free =	hiface_dev_free,
-	};
 
 	*rchip = NULL;
 
 	/* if we are here, card can be registered in alsa. */
-	ret = snd_card_create(index[idx], id[idx], THIS_MODULE, 0, &card);
+	ret = snd_card_create(index[idx], id[idx], THIS_MODULE, sizeof(*chip), &card);
 	if (ret < 0) {
 		snd_printk(KERN_ERR "cannot create alsa card.\n");
 		return ret;
@@ -107,22 +97,10 @@ static int hiface_chip_create(struct usb_device *device, int idx,
 		usb_make_path(device, card->longname + len,
 			      sizeof(card->longname) - len);
 
-	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
-	if (!chip) {
-		snd_card_free(card);
-		return -ENOMEM;
-	}
-
+	chip = card->private_data;
 	chip->dev = device;
 	chip->index = idx;
 	chip->card = card;
-
-	ret = snd_device_new(card, SNDRV_DEV_LOWLEVEL, chip, &ops);
-	if (ret < 0) {
-			kfree(chip);
-			snd_card_free(card);
-			return ret;
-	}
 
 	*rchip = chip;
 	return 0;
