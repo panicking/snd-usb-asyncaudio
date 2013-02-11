@@ -23,7 +23,7 @@
 #define OUT_EP              0x2
 #define PCM_N_URBS          8
 #define PCM_PACKET_SIZE 4096
-#define MAX_BUFSIZE         (2 * PCM_N_URBS * PCM_PACKET_SIZE)
+#define PCM_BUFFER_SIZE         (2 * PCM_N_URBS * PCM_PACKET_SIZE)
 
 struct pcm_urb {
 	struct hiface_chip *chip;
@@ -95,9 +95,9 @@ static const struct snd_pcm_hardware pcm_hw = {
 	.rate_max = 192000, /* changes in hiface_pcm_open to support extra rates */
 	.channels_min = 2,
 	.channels_max = 2,
-	.buffer_bytes_max = MAX_BUFSIZE,
+	.buffer_bytes_max = PCM_BUFFER_SIZE,
 	.period_bytes_min = PCM_PACKET_SIZE,
-	.period_bytes_max = MAX_BUFSIZE,
+	.period_bytes_max = PCM_BUFFER_SIZE,
 	.periods_min = 2,
 	.periods_max = 1024
 };
@@ -625,7 +625,7 @@ int hiface_pcm_init(struct hiface_chip *chip, u8 extra_freq)
 	snd_pcm_lib_preallocate_pages_for_all(pcm,
 					SNDRV_DMA_TYPE_CONTINUOUS,
 					snd_dma_continuous_data(GFP_KERNEL),
-					MAX_BUFSIZE, MAX_BUFSIZE);
+					PCM_BUFFER_SIZE, PCM_BUFFER_SIZE);
 	rt->instance = pcm;
 
 	chip->pcm = rt;
