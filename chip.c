@@ -80,6 +80,7 @@ static int hiface_chip_create(struct usb_device *device, int idx,
 	struct snd_card *card = NULL;
 	struct hiface_chip *chip;
 	int ret;
+	int len;
 	static struct snd_device_ops ops = {
 		.dev_free =	hiface_dev_free,
 	};
@@ -100,8 +101,11 @@ static int hiface_chip_create(struct usb_device *device, int idx,
 	else
 		strcpy(card->shortname, "M2Tech generic audio");
 
-	sprintf(card->longname, "%s at %d:%d", card->shortname,
-			device->bus->busnum, device->devnum);
+	strlcat(card->longname, card->shortname, sizeof(card->longname));
+	len = strlcat(card->longname, " at ", sizeof(card->longname));
+	if (len < sizeof(card->longname))
+		usb_make_path(device, card->longname + len,
+			      sizeof(card->longname) - len);
 
 	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
 	if (!chip) {
