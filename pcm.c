@@ -66,7 +66,7 @@ struct pcm_runtime {
 };
 
 static const unsigned int rates[] = { 44100, 48000, 88200, 96000, 176400, 192000,
-			     352800, 384000 };
+				      352800, 384000 };
 static struct snd_pcm_hw_constraint_list constraints_rates = {
 	.count = ARRAY_SIZE(rates) - 2, /* by default rates up to 192000 are supported */
 	.list = rates,
