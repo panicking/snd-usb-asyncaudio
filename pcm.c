@@ -102,23 +102,54 @@ static const struct snd_pcm_hardware pcm_hw = {
 	.periods_max = 1024
 };
 
+/* message values used to change the sample rate */
+#define HIFACE_SET_RATE_REQUEST 0xb0
+
+#define HIFACE_RATE_44100  0x43
+#define HIFACE_RATE_48000  0x4b
+#define HIFACE_RATE_88200  0x42
+#define HIFACE_RATE_96000  0x4a
+#define HIFACE_RATE_176400 0x40
+#define HIFACE_RATE_192000 0x48
+#define HIFACE_RATE_352000 0x58
+#define HIFACE_RATE_384000 0x68
+
 static int hiface_pcm_set_rate(struct pcm_runtime *rt, unsigned int rate)
 {
-	u8 rate_value[] = { 0x43, 0x4b, 0x42, 0x4a, 0x40, 0x48, 0x58, 0x68 };
-	int ret;
-	int i;
 	struct usb_device *device = rt->chip->dev;
+	u16 rate_value;
+	int ret;
 
-	/* We are already sure that the rate is supported here thanks to the
-	 * contraints set in hiface_pcm_open(), but we have to retrieve the
-	 * index to access rate_value.
+	/* We are already sure that the rate is supported here thanks to
+	 * ALSA constraints
 	 */
-	for (i = 0; i < ARRAY_SIZE(rates); i++)
-		if (rate == rates[i])
-			break;
-
-	if (unlikely(i == ARRAY_SIZE(rates))) {
-		pr_err("Unsupported rate %d\n", rate);
+	switch(rate) {
+	case 44100:
+		rate_value = HIFACE_RATE_44100;
+		break;
+	case 48000:
+		rate_value = HIFACE_RATE_48000;
+		break;
+	case 88200:
+		rate_value = HIFACE_RATE_88200;
+		break;
+	case 96000:
+		rate_value = HIFACE_RATE_96000;
+		break;
+	case 176400:
+		rate_value = HIFACE_RATE_176400;
+		break;
+	case 192000:
+		rate_value = HIFACE_RATE_192000;
+		break;
+	case 352000:
+		rate_value = HIFACE_RATE_352000;
+		break;
+	case 384000:
+		rate_value = HIFACE_RATE_384000;
+		break;
+	default:
+		snd_printk(KERN_ERR "Unsupported rate %d\n", rate);
 		return -EINVAL;
 	}
 
@@ -131,12 +162,11 @@ static int hiface_pcm_set_rate(struct pcm_runtime *rt, unsigned int rate)
 	 * other side
 	 */
 	ret = usb_control_msg(device, usb_sndctrlpipe(device, 0),
-				0xb0,
+				HIFACE_SET_RATE_REQUEST,
 				USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
-				rate_value[i], 0, NULL, 0, 100);
+				rate_value, 0, NULL, 0, 100);
 	if (ret < 0) {
-		snd_printk(KERN_ERR "Error setting samplerate %d.\n",
-				rates[i]);
+		snd_printk(KERN_ERR "Error setting samplerate %d.\n", rate);
 		return ret;
 	}
 
