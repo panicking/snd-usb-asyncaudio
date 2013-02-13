@@ -251,7 +251,8 @@ static void memcpy_swahw32(u8 *dest, u8 *src, unsigned int n)
 }
 
 /* call with substream locked */
-static void hiface_pcm_playback(struct pcm_substream *sub,
+/* returns true if a period elapsed */
+static bool hiface_pcm_playback(struct pcm_substream *sub,
 		struct pcm_urb *urb)
 {
 	struct snd_pcm_runtime *alsa_rt = sub->instance->runtime;
@@ -291,6 +292,11 @@ static void hiface_pcm_playback(struct pcm_substream *sub,
 		sub->dma_off -= pcm_buffer_size;
 
 	sub->period_off += PCM_PACKET_SIZE;
+	if (sub->period_off >= alsa_rt->period_size) {
+		sub->period_off %= alsa_rt->period_size;
+		return true;
+	}
+	return false;
 }
 
 static void hiface_pcm_out_urb_handler(struct urb *usb_urb)
@@ -298,6 +304,7 @@ static void hiface_pcm_out_urb_handler(struct urb *usb_urb)
 	struct pcm_urb *out_urb = usb_urb->context;
 	struct pcm_runtime *rt = out_urb->chip->pcm;
 	struct pcm_substream *sub;
+	bool do_period_elapsed = false;
 	unsigned long flags;
 
 	pr_debug("%s: called.\n", __func__);
@@ -313,19 +320,16 @@ static void hiface_pcm_out_urb_handler(struct urb *usb_urb)
 	/* now send our playback data (if a free out urb was found) */
 	sub = &rt->playback;
 	spin_lock_irqsave(&sub->lock, flags);
-	if (sub->active) {
-		hiface_pcm_playback(sub, out_urb);
-		if (sub->period_off >= sub->instance->runtime->period_size) {
-			sub->period_off %= sub->instance->runtime->period_size;
-			spin_unlock_irqrestore(&sub->lock, flags);
-			snd_pcm_period_elapsed(sub->instance);
-		} else {
-			spin_unlock_irqrestore(&sub->lock, flags);
-		}
-	} else {
+	if (sub->active)
+		do_period_elapsed = hiface_pcm_playback(sub, out_urb);
+	else
 		memset(out_urb->buffer, 0, PCM_PACKET_SIZE);
-		spin_unlock_irqrestore(&sub->lock, flags);
-	}
+
+	spin_unlock_irqrestore(&sub->lock, flags);
+
+	if (do_period_elapsed)
+		snd_pcm_period_elapsed(sub->instance);
+
 	usb_submit_urb(&out_urb->instance, GFP_ATOMIC);
 }
 
