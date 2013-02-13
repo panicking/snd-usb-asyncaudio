@@ -306,11 +306,19 @@ static void hiface_pcm_out_urb_handler(struct urb *usb_urb)
 	struct pcm_substream *sub;
 	bool do_period_elapsed = false;
 	unsigned long flags;
+	int ret;
 
 	pr_debug("%s: called.\n", __func__);
 
-	if (usb_urb->status || rt->panic || rt->stream_state == STREAM_STOPPING)
+	if (rt->panic || rt->stream_state == STREAM_STOPPING)
 		return;
+
+	if (unlikely(usb_urb->status == -ENOENT ||	/* unlinked */
+		     usb_urb->status == -ENODEV ||	/* device removed */
+		     usb_urb->status == -ECONNRESET ||	/* unlinked */
+		     usb_urb->status == -ESHUTDOWN)) {	/* device disabled */
+		goto out_fail;
+	}
 
 	if (rt->stream_state == STREAM_STARTING) {
 		rt->stream_wait_cond = true;
@@ -330,7 +338,14 @@ static void hiface_pcm_out_urb_handler(struct urb *usb_urb)
 	if (do_period_elapsed)
 		snd_pcm_period_elapsed(sub->instance);
 
-	usb_submit_urb(&out_urb->instance, GFP_ATOMIC);
+	ret = usb_submit_urb(&out_urb->instance, GFP_ATOMIC);
+	if (ret < 0)
+		goto out_fail;
+
+	return;
+
+out_fail:
+	rt->panic = true;
 }
 
 static int hiface_pcm_open(struct snd_pcm_substream *alsa_sub)
