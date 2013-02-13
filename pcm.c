@@ -122,7 +122,7 @@ static int hiface_pcm_set_rate(struct pcm_runtime *rt, unsigned int rate)
 	/* We are already sure that the rate is supported here thanks to
 	 * ALSA constraints
 	 */
-	switch(rate) {
+	switch (rate) {
 	case 44100:
 		rate_value = HIFACE_RATE_44100;
 		break;
@@ -412,9 +412,8 @@ static int hiface_pcm_close(struct snd_pcm_substream *alsa_sub)
 		spin_unlock_irqrestore(&sub->lock, flags);
 
 		/* all substreams closed? if so, stop streaming */
-		if (!rt->playback.instance) {
+		if (!rt->playback.instance)
 			hiface_pcm_stream_stop(rt);
-		}
 	}
 	mutex_unlock(&rt->stream_mutex);
 	return 0;
