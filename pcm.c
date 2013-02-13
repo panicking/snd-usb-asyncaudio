@@ -251,20 +251,14 @@ static void memcpy_swahw32(u8 *dest, u8 *src, unsigned int n)
 }
 
 /* call with substream locked */
-static int hiface_pcm_playback(struct pcm_substream *sub,
+static void hiface_pcm_playback(struct pcm_substream *sub,
 		struct pcm_urb *urb)
 {
 	struct snd_pcm_runtime *alsa_rt = sub->instance->runtime;
 	u8 *source;
 	unsigned int pcm_buffer_size;
 
-	/* XXX Can an invalid format make it to here?
-	 * Isn't ALSA checking pcm_hw.formats ?
-	 */
-	if (alsa_rt->format != SNDRV_PCM_FORMAT_S32_LE) {
-		pr_err("Unsupported sample format\n");
-		return -EINVAL;
-	}
+	WARN_ON(alsa_rt->format != SNDRV_PCM_FORMAT_S32_LE);
 
 	pcm_buffer_size = snd_pcm_lib_buffer_bytes(sub->instance);
 
@@ -297,8 +291,6 @@ static int hiface_pcm_playback(struct pcm_substream *sub,
 		sub->dma_off -= pcm_buffer_size;
 
 	sub->period_off += PCM_PACKET_SIZE;
-
-	return 0;
 }
 
 static void hiface_pcm_out_urb_handler(struct urb *usb_urb)
@@ -322,13 +314,7 @@ static void hiface_pcm_out_urb_handler(struct urb *usb_urb)
 	sub = &rt->playback;
 	spin_lock_irqsave(&sub->lock, flags);
 	if (sub->active) {
-		int ret;
-
-		ret = hiface_pcm_playback(sub, out_urb);
-		if (ret < 0) {
-			spin_unlock_irqrestore(&sub->lock, flags);
-			goto out_fail;
-		}
+		hiface_pcm_playback(sub, out_urb);
 		if (sub->period_off >= sub->instance->runtime->period_size) {
 			sub->period_off %= sub->instance->runtime->period_size;
 			spin_unlock_irqrestore(&sub->lock, flags);
@@ -340,7 +326,6 @@ static void hiface_pcm_out_urb_handler(struct urb *usb_urb)
 		memset(out_urb->buffer, 0, PCM_PACKET_SIZE);
 		spin_unlock_irqrestore(&sub->lock, flags);
 	}
-out_fail:
 	usb_submit_urb(&out_urb->instance, GFP_ATOMIC);
 }
 
