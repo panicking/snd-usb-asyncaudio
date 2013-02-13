@@ -20,10 +20,10 @@
 #include "pcm.h"
 #include "chip.h"
 
-#define OUT_EP              0x2
-#define PCM_N_URBS          8
+#define OUT_EP          0x2
+#define PCM_N_URBS      8
 #define PCM_PACKET_SIZE 4096
-#define PCM_BUFFER_SIZE         (2 * PCM_N_URBS * PCM_PACKET_SIZE)
+#define PCM_BUFFER_SIZE (2 * PCM_N_URBS * PCM_PACKET_SIZE)
 
 struct pcm_urb {
 	struct hiface_chip *chip;
