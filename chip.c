@@ -115,8 +115,6 @@ static int hiface_chip_probe(struct usb_interface *intf,
 	struct hiface_chip *chip;
 	struct usb_device *device = interface_to_usbdev(intf);
 
-	pr_debug("Probe " DRIVER_NAME " driver.\n");
-
 	ret = usb_set_interface(device, 0, 0);
 	if (ret != 0) {
 		dev_err(&device->dev, "can't set first interface for " CARD_NAME " device.\n");
@@ -187,8 +185,6 @@ static void hiface_chip_disconnect(struct usb_interface *intf)
 {
 	struct hiface_chip *chip;
 	struct snd_card *card;
-
-	pr_debug("%s: called.\n", __func__);
 
 	chip = usb_get_intfdata(intf);
 	if (!chip)
