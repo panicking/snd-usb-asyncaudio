@@ -148,7 +148,7 @@ static int hiface_pcm_set_rate(struct pcm_runtime *rt, unsigned int rate)
 		rate_value = HIFACE_RATE_384000;
 		break;
 	default:
-		snd_printk(KERN_ERR "Unsupported rate %d\n", rate);
+		dev_err(&device->dev, "Unsupported rate %d\n", rate);
 		return -EINVAL;
 	}
 
@@ -165,7 +165,7 @@ static int hiface_pcm_set_rate(struct pcm_runtime *rt, unsigned int rate)
 				USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
 				rate_value, 0, NULL, 0, 100);
 	if (ret < 0) {
-		snd_printk(KERN_ERR "Error setting samplerate %d.\n", rate);
+		dev_err(&device->dev, "Error setting samplerate %d.\n", rate);
 		return ret;
 	}
 

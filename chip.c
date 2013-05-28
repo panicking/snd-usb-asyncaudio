@@ -80,7 +80,7 @@ static int hiface_chip_create(struct usb_device *device, int idx,
 	/* if we are here, card can be registered in alsa. */
 	ret = snd_card_create(index[idx], id[idx], THIS_MODULE, sizeof(*chip), &card);
 	if (ret < 0) {
-		snd_printk(KERN_ERR "cannot create alsa card.\n");
+		dev_err(&device->dev, "cannot create alsa card.\n");
 		return ret;
 	}
 
@@ -119,7 +119,7 @@ static int hiface_chip_probe(struct usb_interface *intf,
 
 	ret = usb_set_interface(device, 0, 0);
 	if (ret != 0) {
-		snd_printk(KERN_ERR "can't set first interface for " CARD_NAME " device.\n");
+		dev_err(&device->dev, "can't set first interface for " CARD_NAME " device.\n");
 		return -EIO;
 	}
 
@@ -129,7 +129,7 @@ static int hiface_chip_probe(struct usb_interface *intf,
 	for (i = 0; i < SNDRV_CARDS; i++) {
 		if (chips[i] && chips[i]->dev == device) {
 			if (chips[i]->shutdown) {
-				snd_printk(KERN_ERR CARD_NAME " device is in the shutdown state, cannot create a card instance\n");
+				dev_err(&device->dev, CARD_NAME " device is in the shutdown state, cannot create a card instance\n");
 				ret = -ENODEV;
 				goto err;
 			}
@@ -152,7 +152,7 @@ static int hiface_chip_probe(struct usb_interface *intf,
 				break;
 			}
 		if (!chip) {
-			snd_printk(KERN_ERR "no available " CARD_NAME " audio device\n");
+			dev_err(&device->dev, "no available " CARD_NAME " audio device\n");
 			ret = -ENODEV;
 			goto err;
 		}
@@ -164,7 +164,7 @@ static int hiface_chip_probe(struct usb_interface *intf,
 
 	ret = snd_card_register(chip->card);
 	if (ret < 0) {
-		snd_printk(KERN_ERR "cannot register " CARD_NAME " card\n");
+		dev_err(&device->dev, "cannot register " CARD_NAME " card\n");
 		goto err_chip_destroy;
 	}
 
