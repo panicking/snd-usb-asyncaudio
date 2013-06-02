@@ -473,7 +473,6 @@ static int hiface_pcm_trigger(struct snd_pcm_substream *alsa_sub, int cmd)
 {
 	struct pcm_substream *sub = hiface_pcm_get_substream(alsa_sub);
 	struct pcm_runtime *rt = snd_pcm_substream_chip(alsa_sub);
-	unsigned long flags;
 
 	pr_debug("%s: called.\n", __func__);
 
@@ -485,16 +484,16 @@ static int hiface_pcm_trigger(struct snd_pcm_substream *alsa_sub, int cmd)
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
 	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		spin_lock_irqsave(&sub->lock, flags);
+		spin_lock_irq(&sub->lock);
 		sub->active = true;
-		spin_unlock_irqrestore(&sub->lock, flags);
+		spin_unlock_irq(&sub->lock);
 		return 0;
 
 	case SNDRV_PCM_TRIGGER_STOP:
 	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		spin_lock_irqsave(&sub->lock, flags);
+		spin_lock_irq(&sub->lock);
 		sub->active = false;
-		spin_unlock_irqrestore(&sub->lock, flags);
+		spin_unlock_irq(&sub->lock);
 		return 0;
 
 	default:
