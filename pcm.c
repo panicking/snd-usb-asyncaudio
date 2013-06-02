@@ -557,12 +557,6 @@ void hiface_pcm_abort(struct hiface_chip *chip)
 	if (rt) {
 		rt->panic = true;
 
-		if (rt->playback.instance) {
-			snd_pcm_stream_lock_irq(rt->playback.instance);
-			snd_pcm_stop(rt->playback.instance,
-					SNDRV_PCM_STATE_XRUN);
-			snd_pcm_stream_unlock_irq(rt->playback.instance);
-		}
 		mutex_lock(&rt->stream_mutex);
 		hiface_pcm_stream_stop(rt);
 		mutex_unlock(&rt->stream_mutex);
