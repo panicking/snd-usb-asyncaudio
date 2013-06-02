@@ -176,11 +176,12 @@ static struct pcm_substream *hiface_pcm_get_substream(
 		struct snd_pcm_substream *alsa_sub)
 {
 	struct pcm_runtime *rt = snd_pcm_substream_chip(alsa_sub);
+	struct device *device = &rt->chip->dev->dev;
 
 	if (alsa_sub->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		return &rt->playback;
 
-	pr_debug("Error getting pcm substream slot.\n");
+	dev_err(device, "Error getting pcm substream slot.\n");
 	return NULL;
 }
 
