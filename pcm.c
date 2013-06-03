@@ -209,7 +209,8 @@ static void hiface_pcm_stream_stop(struct pcm_runtime *rt)
 /* call with stream_mutex locked */
 static int hiface_pcm_stream_start(struct pcm_runtime *rt)
 {
-	int ret = 0, i;
+	int ret = 0;
+	int i;
 
 	if (rt->stream_state == STREAM_DISABLED) {
 		/* submit our out urbs zero init */
