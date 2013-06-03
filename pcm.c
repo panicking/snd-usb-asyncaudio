@@ -231,7 +231,8 @@ static int hiface_pcm_stream_start(struct pcm_runtime *rt)
 		wait_event_timeout(rt->stream_wait_queue, rt->stream_wait_cond,
 				   HZ);
 		if (rt->stream_wait_cond) {
-			pr_debug("%s: Stream is running wakeup event\n",
+			struct device *device = &rt->chip->dev->dev;
+			dev_dbg(device, "%s: Stream is running wakeup event\n",
 				 __func__);
 			rt->stream_state = STREAM_RUNNING;
 		} else {
@@ -256,6 +257,7 @@ static void memcpy_swahw32(u8 *dest, u8 *src, unsigned int n)
 static bool hiface_pcm_playback(struct pcm_substream *sub, struct pcm_urb *urb)
 {
 	struct snd_pcm_runtime *alsa_rt = sub->instance->runtime;
+	struct device *device = &urb->chip->dev->dev;
 	u8 *source;
 	unsigned int pcm_buffer_size;
 
@@ -264,7 +266,7 @@ static bool hiface_pcm_playback(struct pcm_substream *sub, struct pcm_urb *urb)
 	pcm_buffer_size = snd_pcm_lib_buffer_bytes(sub->instance);
 
 	if (sub->dma_off + PCM_PACKET_SIZE <= pcm_buffer_size) {
-		pr_debug("%s: (1) buffer_size %#x dma_offset %#x\n", __func__,
+		dev_dbg(device, "%s: (1) buffer_size %#x dma_offset %#x\n", __func__,
 			 (unsigned int) pcm_buffer_size,
 			 (unsigned int) sub->dma_off);
 
@@ -274,7 +276,7 @@ static bool hiface_pcm_playback(struct pcm_substream *sub, struct pcm_urb *urb)
 		/* wrap around at end of ring buffer */
 		unsigned int len;
 
-		pr_debug("%s: (2) buffer_size %#x dma_offset %#x\n", __func__,
+		dev_dbg(device, "%s: (2) buffer_size %#x dma_offset %#x\n", __func__,
 			 (unsigned int) pcm_buffer_size,
 			 (unsigned int) sub->dma_off);
 
@@ -367,8 +369,9 @@ static int hiface_pcm_open(struct snd_pcm_substream *alsa_sub)
 		sub = &rt->playback;
 
 	if (!sub) {
+		struct device *device = &rt->chip->dev->dev;
 		mutex_unlock(&rt->stream_mutex);
-		pr_err("Invalid stream type\n");
+		dev_err(device, "Invalid stream type\n");
 		return -EINVAL;
 	}
 
@@ -613,7 +616,7 @@ int hiface_pcm_init(struct hiface_chip *chip, u8 extra_freq)
 	ret = snd_pcm_new(chip->card, "USB-SPDIF Audio", 0, 1, 0, &pcm);
 	if (ret < 0) {
 		kfree(rt);
-		pr_err("Cannot create pcm instance\n");
+		dev_err(&chip->dev->dev, "Cannot create pcm instance\n");
 		return ret;
 	}
 
