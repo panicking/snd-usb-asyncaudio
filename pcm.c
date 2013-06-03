@@ -161,9 +161,9 @@ static int hiface_pcm_set_rate(struct pcm_runtime *rt, unsigned int rate)
 	 * other side
 	 */
 	ret = usb_control_msg(device, usb_sndctrlpipe(device, 0),
-				HIFACE_SET_RATE_REQUEST,
-				USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
-				rate_value, 0, NULL, 0, 100);
+			      HIFACE_SET_RATE_REQUEST,
+			      USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
+			      rate_value, 0, NULL, 0, 100);
 	if (ret < 0) {
 		dev_err(&device->dev, "Error setting samplerate %d.\n", rate);
 		return ret;
@@ -172,8 +172,8 @@ static int hiface_pcm_set_rate(struct pcm_runtime *rt, unsigned int rate)
 	return 0;
 }
 
-static struct pcm_substream *hiface_pcm_get_substream(
-		struct snd_pcm_substream *alsa_sub)
+static struct pcm_substream *hiface_pcm_get_substream(struct snd_pcm_substream
+						      *alsa_sub)
 {
 	struct pcm_runtime *rt = snd_pcm_substream_chip(alsa_sub);
 	struct device *device = &rt->chip->dev->dev;
@@ -219,7 +219,7 @@ static int hiface_pcm_stream_start(struct pcm_runtime *rt)
 			usb_anchor_urb(&rt->out_urbs[i].instance,
 				       &rt->out_urbs[i].submitted);
 			ret = usb_submit_urb(&rt->out_urbs[i].instance,
-					GFP_ATOMIC);
+					     GFP_ATOMIC);
 			if (ret) {
 				hiface_pcm_stream_stop(rt);
 				return ret;
@@ -228,7 +228,7 @@ static int hiface_pcm_stream_start(struct pcm_runtime *rt)
 
 		/* wait for first out urb to return (sent in in urb handler) */
 		wait_event_timeout(rt->stream_wait_queue, rt->stream_wait_cond,
-				HZ);
+				   HZ);
 		if (rt->stream_wait_cond) {
 			pr_debug("%s: Stream is running wakeup event\n",
 				 __func__);
@@ -241,7 +241,6 @@ static int hiface_pcm_stream_start(struct pcm_runtime *rt)
 	return ret;
 }
 
-
 /* The hardware wants word-swapped 32-bit values */
 static void memcpy_swahw32(u8 *dest, u8 *src, unsigned int n)
 {
@@ -253,8 +252,7 @@ static void memcpy_swahw32(u8 *dest, u8 *src, unsigned int n)
 
 /* call with substream locked */
 /* returns true if a period elapsed */
-static bool hiface_pcm_playback(struct pcm_substream *sub,
-		struct pcm_urb *urb)
+static bool hiface_pcm_playback(struct pcm_substream *sub, struct pcm_urb *urb)
 {
 	struct snd_pcm_runtime *alsa_rt = sub->instance->runtime;
 	u8 *source;
@@ -422,7 +420,7 @@ static int hiface_pcm_close(struct snd_pcm_substream *alsa_sub)
 }
 
 static int hiface_pcm_hw_params(struct snd_pcm_substream *alsa_sub,
-		struct snd_pcm_hw_params *hw_params)
+				struct snd_pcm_hw_params *hw_params)
 {
 	pr_debug("%s: called.\n", __func__);
 	return snd_pcm_lib_alloc_vmalloc_buffer(alsa_sub,
@@ -609,7 +607,7 @@ int hiface_pcm_init(struct hiface_chip *chip, u8 extra_freq)
 
 	for (i = 0; i < PCM_N_URBS; i++)
 		hiface_pcm_init_urb(&rt->out_urbs[i], chip, OUT_EP,
-				hiface_pcm_out_urb_handler);
+				    hiface_pcm_out_urb_handler);
 
 	ret = snd_pcm_new(chip->card, "USB-SPDIF Audio", 0, 1, 0, &pcm);
 	if (ret < 0) {
