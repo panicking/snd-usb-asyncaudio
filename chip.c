@@ -97,7 +97,6 @@ static int hiface_chip_create(struct usb_device *device, int idx,
 
 	chip = card->private_data;
 	chip->dev = device;
-	chip->index = idx;
 	chip->card = card;
 
 	*rchip = chip;

@@ -25,7 +25,6 @@ struct pcm_runtime;
 struct hiface_chip {
 	struct usb_device *dev;
 	struct snd_card *card;
-	int index; /* index in module parameter arrays */
 	struct pcm_runtime *pcm;
 };
 #endif /* HIFACE_CHIP_H */
