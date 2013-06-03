@@ -25,10 +25,7 @@ struct pcm_runtime;
 struct hiface_chip {
 	struct usb_device *dev;
 	struct snd_card *card;
-	int intf_count; /* number of registered interfaces */
 	int index; /* index in module parameter arrays */
-	bool shutdown;
-
 	struct pcm_runtime *pcm;
 };
 #endif /* HIFACE_CHIP_H */

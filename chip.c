@@ -57,8 +57,6 @@ MODULE_PARM_DESC(id, "ID string for " CARD_NAME " soundcard.");
 module_param_array(enable, bool, NULL, 0444);
 MODULE_PARM_DESC(enable, "Enable " CARD_NAME " soundcard.");
 
-static struct hiface_chip *chips[SNDRV_CARDS] = SNDRV_DEFAULT_PTR;
-
 static DEFINE_MUTEX(register_mutex);
 
 struct hiface_vendor_quirk {
@@ -124,37 +122,22 @@ static int hiface_chip_probe(struct usb_interface *intf,
 	/* check whether the card is already registered */
 	chip = NULL;
 	mutex_lock(&register_mutex);
-	for (i = 0; i < SNDRV_CARDS; i++) {
-		if (chips[i] && chips[i]->dev == device) {
-			if (chips[i]->shutdown) {
-				dev_err(&device->dev, CARD_NAME " device is in the shutdown state, cannot create a card instance\n");
-				ret = -ENODEV;
-				goto err;
-			}
-			chip = chips[i];
-			break;
-		}
-	}
-	if (!chip) {
-		/* it's a fresh one.
-		 * now look for an empty slot and create a new card instance
-		 */
-		for (i = 0; i < SNDRV_CARDS; i++)
-			if (enable[i] && !chips[i]) {
-				ret = hiface_chip_create(device, i, quirk,
-							 &chip);
-				if (ret < 0)
-					goto err;
 
-				snd_card_set_dev(chip->card, &intf->dev);
-				break;
-			}
-		if (!chip) {
-			dev_err(&device->dev, "no available " CARD_NAME " audio device\n");
-			ret = -ENODEV;
-			goto err;
-		}
+	for (i = 0; i < SNDRV_CARDS; i++)
+		if (enable[i])
+			break;
+
+	if (i >= SNDRV_CARDS) {
+		dev_err(&device->dev, "no available " CARD_NAME " audio device\n");
+		ret = -ENODEV;
+		goto err;
 	}
+
+	ret = hiface_chip_create(device, i, quirk, &chip);
+	if (ret < 0)
+		goto err;
+
+	snd_card_set_dev(chip->card, &intf->dev);
 
 	ret = hiface_pcm_init(chip, quirk ? quirk->extra_freq : 0);
 	if (ret < 0)
@@ -165,9 +148,6 @@ static int hiface_chip_probe(struct usb_interface *intf,
 		dev_err(&device->dev, "cannot register " CARD_NAME " card\n");
 		goto err_chip_destroy;
 	}
-
-	chips[chip->index] = chip;
-	chip->intf_count++;
 
 	mutex_unlock(&register_mutex);
 
@@ -191,19 +171,12 @@ static void hiface_chip_disconnect(struct usb_interface *intf)
 		return;
 
 	card = chip->card;
-	chip->intf_count--;
-	if (chip->intf_count <= 0) {
-		/* Make sure that the userspace cannot create new request */
-		snd_card_disconnect(card);
 
-		mutex_lock(&register_mutex);
-		chips[chip->index] = NULL;
-		mutex_unlock(&register_mutex);
+	/* Make sure that the userspace cannot create new request */
+	snd_card_disconnect(card);
 
-		chip->shutdown = true;
-		hiface_pcm_abort(chip);
-		snd_card_free_when_closed(card);
-	}
+	hiface_pcm_abort(chip);
+	snd_card_free_when_closed(card);
 }
 
 static const struct usb_device_id device_table[] = {
