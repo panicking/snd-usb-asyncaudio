@@ -213,6 +213,10 @@ static int hiface_pcm_stream_start(struct pcm_runtime *rt)
 	int i;
 
 	if (rt->stream_state == STREAM_DISABLED) {
+
+		/* reset panic state when starting a new stream */
+		rt->panic = false;
+
 		/* submit our out urbs zero init */
 		rt->stream_state = STREAM_STARTING;
 		for (i = 0; i < PCM_N_URBS; i++) {
