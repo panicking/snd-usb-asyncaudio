@@ -412,7 +412,6 @@ static int hiface_pcm_close(struct snd_pcm_substream *alsa_sub)
 
 	mutex_lock(&rt->stream_mutex);
 	if (sub) {
-		/* all substreams closed? if so, stop streaming */
 		hiface_pcm_stream_stop(rt);
 
 		/* deactivate substream */
