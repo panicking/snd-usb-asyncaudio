@@ -16,6 +16,7 @@
 
 #include <linux/module.h>
 #include <linux/slab.h>
+#include <linux/version.h>
 #include <sound/initval.h>
 
 #include "chip.h"
@@ -76,7 +77,12 @@ static int hiface_chip_create(struct usb_device *device, int idx,
 	*rchip = NULL;
 
 	/* if we are here, card can be registered in alsa. */
+
+	#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0)
 	ret = snd_card_create(index[idx], id[idx], THIS_MODULE, sizeof(*chip), &card);
+	#else
+	ret = snd_card_new(&device->dev, index[idx], id[idx], THIS_MODULE, sizeof(*chip), &card);
+	#endif
 	if (ret < 0) {
 		dev_err(&device->dev, "cannot create alsa card.\n");
 		return ret;
