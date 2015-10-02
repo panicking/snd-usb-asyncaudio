@@ -76,7 +76,7 @@ static int hiface_chip_create(struct usb_device *device, int idx,
 	*rchip = NULL;
 
 	/* if we are here, card can be registered in alsa. */
-	ret = snd_card_create(index[idx], id[idx], THIS_MODULE, sizeof(*chip), &card);
+	ret = snd_card_new(&device->dev,index[idx], id[idx], THIS_MODULE, sizeof(*chip), &card);
 	if (ret < 0) {
 		dev_err(&device->dev, "cannot create alsa card.\n");
 		return ret;
